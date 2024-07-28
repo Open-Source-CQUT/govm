@@ -7,15 +7,18 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "govm",
-	Version: Version,
-	Short:   "Go Version Manager",
-	Long:    "Go Version Manager",
+	Use:          "govm",
+	SilenceUsage: true,
+	Version:      Version,
+	Short:        "Go Version Manager",
+	Long:         "Go Version Manager",
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	rootCmd.SetVersionTemplate("{{.Version}}")
 	rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(listCmd)
 }
 
 func main() {

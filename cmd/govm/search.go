@@ -20,7 +20,7 @@ var (
 	// only show release versions
 	showRelease bool
 	// show count of matching versions
-	showSearchCount bool
+	showCount bool
 )
 
 const defaultLines = 20
@@ -37,7 +37,7 @@ var searchCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if showSearchCount {
+		if showCount {
 			fmt.Println(len(result))
 		} else {
 			fmt.Println(strings.Join(result, "\n"))
@@ -48,7 +48,7 @@ var searchCmd = &cobra.Command{
 
 func init() {
 	searchCmd.Flags().IntVarP(&lines, "lines", "n", defaultLines, "number of lines to display, list all if n=-1")
-	searchCmd.Flags().BoolVarP(&showSearchCount, "count", "c", false, "show count of matching versions")
+	searchCmd.Flags().BoolVarP(&showCount, "count", "c", false, "show count of matching versions")
 	searchCmd.Flags().BoolVar(&ascend, "ascend", false, "sort by version in ascending order")
 	searchCmd.Flags().BoolVar(&showBeta, "beta", false, "only show beta versions")
 	searchCmd.Flags().BoolVar(&showRc, "rc", false, "only show rc versions")
@@ -61,12 +61,15 @@ func RunSearch(pattern string, lines int, ascend, release, beta, rc bool) ([]str
 	if err != nil {
 		return nil, err
 	}
+	return Filter(remoteVersions, pattern, lines, release, beta, rc)
+}
 
+func Filter(versions []string, pattern string, lines int, release, beta, rc bool) ([]string, error) {
 	// match versions with pattern
 	patternMatch := regexp.MustCompile(fmt.Sprintf(`(%s)`, pattern))
 	var matchedVersions []string
 	if len(pattern) > 0 {
-		for _, version := range remoteVersions {
+		for _, version := range versions {
 			if len(matchedVersions) >= lines {
 				break
 			}
@@ -75,7 +78,7 @@ func RunSearch(pattern string, lines int, ascend, release, beta, rc bool) ([]str
 			}
 		}
 	} else {
-		matchedVersions = remoteVersions
+		matchedVersions = versions
 	}
 
 	// filter by beta or rc

@@ -19,6 +19,7 @@ func init() {
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(cleanCmd)
 }
 
 func main() {

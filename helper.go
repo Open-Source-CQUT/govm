@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"unsafe"
 )
 
@@ -66,6 +67,9 @@ func Println(a ...any) {
 
 func Printf(format string, a ...any) {
 	if !Silence {
-		fmt.Printf(format+"\n", a...)
+		if !strings.HasSuffix(format, "\n") {
+			format = format + "\n"
+		}
+		fmt.Printf(format, a...)
 	}
 }

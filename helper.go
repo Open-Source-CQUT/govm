@@ -2,6 +2,7 @@ package govm
 
 import (
 	"fmt"
+	"go/version"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,32 +19,11 @@ func string2bytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-// compare two version strings.
-// eg.
-//
-//	compareVersion(1.0.0,1.0.1) = -1
-//	compareVersion(1.2.0,1.0.1) = 1
-//	compareVersion(1.1.0,1.1.0) = 0
-func compareVersion(version1 string, version2 string) int {
-	var i, j int
-	for i < len(version1) || j < len(version2) {
-		var a, b int
-		for ; i < len(version1) && version1[i] != '.'; i++ {
-			a = a*10 + int(version1[i]-'0')
-		}
-		for ; j < len(version2) && version2[j] != '.'; j++ {
-			b = b*10 + int(version2[j]-'0')
-		}
-		if a > b {
-			return 1
-		} else if a < b {
-			return -1
-		}
-
-		i++
-		j++
-	}
-	return 0
+func CompareVersion(v1, v2 string) int {
+	return version.Compare(v1, v2)
+}
+func IsValidVersion(v string) bool {
+	return version.IsValid(v)
 }
 
 func OpenFile(filename string, flag int, perm os.FileMode) (*os.File, error) {

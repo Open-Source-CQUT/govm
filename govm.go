@@ -150,7 +150,7 @@ func LocalList(ascend bool) ([]string, error) {
 		localList = append(localList, version)
 	}
 	slices.SortFunc(localList, func(v1, v2 string) int {
-		return -compareVersion(v1, v2)
+		return -CompareVersion(v1, v2)
 	})
 	if ascend {
 		slices.Reverse(localList)

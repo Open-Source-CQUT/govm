@@ -47,6 +47,9 @@ func RunInstall(version string) error {
 	if !strings.HasPrefix(version, "go") {
 		version = "go" + version
 	}
+	if valid := govm.IsValidVersion(version); !valid {
+		return fmt.Errorf("invalid version: %s", version)
+	}
 	// check if is already installed
 	localList, err := govm.LocalList(false)
 	if err != nil {

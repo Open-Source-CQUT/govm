@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 const (
@@ -15,10 +16,11 @@ const (
 )
 
 type Config struct {
-	Source       string `toml:"source"`
-	Cache        string `toml:"cache"`
-	Proxy        string `toml:"proxy"`
-	Installation string `toml:"installation"`
+	VersionURL  string `toml:"versionURL,commented" comment:"where to query Go versions, default https://go.dev/dl/?mode=json&include=all"`
+	DownloadURL string `toml:"downloadURL,commented" comment:"download URL for Go release archive, default https://dl.google.com/go/"`
+	Proxy       string `toml:"proxy,commented" comment:"proxy for HTTP requests, default use system proxy"`
+	Cache       string `toml:"cache,commented" comment:"where to cache downloaded archives, default $HOME/.govm/cache/"`
+	Install     string `toml:"install,commented" comment:"where to install Go, windows: $HOME/AppData/Local/govm-store/root/ "`
 
 	dir string
 }
@@ -78,27 +80,48 @@ func WriteConfig(cfg *Config) error {
 }
 
 const (
-	_EnvSourceKey = "GOVM_SOURCE"
-	// eg. https://go.dev/dl/go1.22.5.linux-amd64.msi
-	_GoSource = "https://go.dev/dl/"
-	// eg. https://dl.google.com/go/go1.22.5.linux-amd64.tar.gz
-	_GoogleSource = "https://dl.google.com/go/"
-	// eg. https://mirrors.aliyun.com/golang/go1.10.1.linux-amd64.tar.gz
-	_AliCloudSource = "https://mirrors.aliyun.com/golang/"
+	_EnvVersionURL  = "GOVM_VERSION"
+	_GoDLVersionURL = "https://go.dev/dl/"
 )
 
-func GetSource() (string, error) {
-	envProxy, found := os.LookupEnv(_EnvSourceKey)
+func GetVersionURL() (string, error) {
+	envVersionURL, found := os.LookupEnv(_EnvVersionURL)
 	if found {
-		return envProxy, nil
+		return envVersionURL, nil
 	}
 	config, err := ReadConfig()
 	if err != nil {
 		return "", err
-	} else if config.Source != "" {
-		return config.Source, err
+	} else if config.VersionURL != "" {
+		return config.VersionURL, nil
 	}
-	return _GoSource, nil
+	return _GoDLVersionURL, nil
+}
+
+const (
+	_EnvDownloadURL = "GOVM_DOWNLOAD"
+	// eg. https://dl.google.com/go/go1.22.5.linux-amd64.tar.gz
+	_GoogleDownloadURL = "https://dl.google.com/go/"
+	// eg. https://mirrors.aliyun.com/golang/go1.10.1.linux-amd64.tar.gz
+	_AliCloudDL = "https://mirrors.aliyun.com/golang/"
+	// eg. https://mirrors.ustc.edu.cn/golang/go1.10.2.freebsd-386.tar.gz.asc
+	_USTCDownloadURL = "https://mirrors.ustc.edu.cn/golang/"
+	// eg. https://go.dev/dl/go1.22.5.windows-amd64.msi.sha256
+	_NJUDownloadURL = "https://mirrors.nju.edu.cn/golang/"
+)
+
+func GetDownloadURL() (string, error) {
+	envDownloadURL, found := os.LookupEnv(_EnvDownloadURL)
+	if found {
+		return envDownloadURL, nil
+	}
+	config, err := ReadConfig()
+	if err != nil {
+		return "", err
+	} else if config.DownloadURL != "" {
+		return config.DownloadURL, err
+	}
+	return _GoogleDownloadURL, nil
 }
 
 const (
@@ -114,38 +137,27 @@ func GetCacheDir() (string, error) {
 	config, err := ReadConfig()
 	if err != nil {
 		return "", err
-	}
-	if config.Cache != "" {
-		return "", err
+	} else if config.Cache != "" {
+		return config.Cache, nil
 	}
 	return filepath.Join(config.dir, _DefaultCache), err
 }
-
-const (
-	_EnvProxyKey = "GOVM_PROXY"
-)
 
 func GetHttpClient() (*http.Client, error) {
 	var (
 		err    error
 		proxy  string
 		config *Config
-		client = &http.Client{}
+		client = &http.Client{Timeout: time.Second * 10}
 	)
-	envProxy, found := os.LookupEnv(_EnvProxyKey)
-	if found {
-		proxy = envProxy
-		goto ret
-	}
 	config, err = ReadConfig()
 	if err != nil {
 		return nil, err
 	} else if config.Proxy != "" {
 		proxy = config.Proxy
 	}
-	goto ret
 
-ret:
+	// get proxy from env
 	if proxy == "" {
 		client.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 		return client, nil
@@ -173,8 +185,8 @@ func GetInstallation() (string, error) {
 	config, err := ReadConfig()
 	if err != nil {
 		return "", err
-	} else if config.Installation != "" {
-		return config.Installation, err
+	} else if config.Install != "" {
+		return config.Install, nil
 	}
 
 	// windows: $HOME/AppData/Local/govm-store

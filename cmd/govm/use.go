@@ -1,9 +1,8 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"github.com/Open-Source-CQUT/govm"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"slices"
 )
@@ -12,29 +11,32 @@ var useCmd = &cobra.Command{
 	Use:   "use",
 	Short: "use specified version of go",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return errors.New("not version specified")
-		} else {
-			version := args[0]
-			return RunUse(version)
+		var version string
+		if len(args) > 0 {
+			version = args[0]
 		}
+		return RunUse(version)
 	},
 }
 
-func RunUse(version string) error {
-	checkV, err := govm.CheckVersion(version)
-	if err != nil {
-		return err
+func RunUse(v string) error {
+	if v == "" {
+		return errorx.Warn("no version specified")
 	}
-	version = checkV
+	version, ok := govm.CheckVersion(v)
+	if !ok {
+		return errorx.Warnf("invalid version: %s", v)
+	}
 	// try to find from local
-	localList, err := govm.LocalList(false)
+	localList, err := govm.GetLocalVersions(false)
 	if err != nil {
 		return err
 	}
 
-	if !slices.Contains(localList, version) {
-		return fmt.Errorf("%s not found in local", version)
+	if !slices.ContainsFunc(localList, func(v govm.Version) bool {
+		return v.Version == version
+	}) {
+		return errorx.Warnf("%s not found in local", version)
 	}
 
 	storeData, err := govm.ReadStore()
@@ -47,6 +49,6 @@ func RunUse(version string) error {
 	}
 
 	//TODO update profile
-	govm.Printf("using version %s now", version)
+	govm.Tipf("Use %s now", version)
 	return nil
 }

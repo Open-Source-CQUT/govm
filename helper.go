@@ -2,9 +2,10 @@ package govm
 
 import (
 	"fmt"
-	"go/version"
+	"github.com/Open-Source-CQUT/gover"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unsafe"
 )
@@ -19,11 +20,28 @@ func string2bytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-func CompareVersion(v1, v2 string) int {
-	return version.Compare(v1, v2)
+func MaxVersion(vs []string) string {
+	if len(vs) == 0 {
+		return ""
+	}
+	return slices.MaxFunc(vs, func(v1, v2 string) int {
+		return CompareVersion(v1, v2)
+	})
 }
+
+func CompareVersion(v1, v2 string) int {
+	return gover.Compare(v1, v2)
+}
+
 func IsValidVersion(v string) bool {
-	return version.IsValid(v)
+	return gover.IsValid(v)
+}
+
+func CheckVersion(v string) (string, bool) {
+	if !strings.HasPrefix(v, "go") {
+		v = "go" + v
+	}
+	return v, gover.IsValid(v)
 }
 
 func OpenFile(filename string, flag int, perm os.FileMode) (*os.File, error) {
@@ -39,13 +57,7 @@ func OpenFile(filename string, flag int, perm os.FileMode) (*os.File, error) {
 
 var Silence bool
 
-func Println(a ...any) {
-	if !Silence {
-		fmt.Println(a...)
-	}
-}
-
-func Printf(format string, a ...any) {
+func Tipf(format string, a ...any) {
 	if !Silence {
 		if !strings.HasSuffix(format, "\n") {
 			format = format + "\n"

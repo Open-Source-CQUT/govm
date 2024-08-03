@@ -3,77 +3,15 @@ package govm
 import (
 	"context"
 	"fmt"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/mholt/archiver/v4"
 	"github.com/schollz/progressbar/v3"
 	"io"
-	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
-	"runtime"
-	"slices"
 	"strings"
 	"time"
 )
-
-const (
-	_GoGithubURL = "https://github.com/golang/go"
-)
-
-var Buffer = make([]byte, 4096)
-
-// match tags from ls-remote output
-var matchVersion = regexp.MustCompile(`refs/tags/go.+`)
-
-// GetRemoteVersions return all available go versions from remote repository.
-func GetRemoteVersions(ascend bool) ([]string, error) {
-	// sort order by version
-	sortByVersion := "--sort=-version:refname"
-	if ascend {
-		sortByVersion = "--sort=version:refname"
-	}
-
-	// git ls--remote --tags --sort=version:refname _GoGithubURL
-	lsCmd := exec.Command("git", "ls-remote", "--tags", sortByVersion, _GoGithubURL)
-	output, err := lsCmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	// find all matched tags by regex
-	outputStr := bytes2string(output)
-	matches := matchVersion.FindAllString(outputStr, -1)
-
-	// trim prefix
-	var list []string
-	for _, match := range matches {
-		list = append(list, strings.TrimPrefix(match, "refs/tags/"))
-	}
-	return list, nil
-}
-
-func ChooseDownloadURL(version string) (string, string, error) {
-	source, err := GetSource()
-	if err != nil {
-		return "", "", err
-	}
-	// the os and arch is same as current tool
-	os := runtime.GOOS
-	arch := runtime.GOARCH
-	var ext string
-	if os == "windows" {
-		ext = "zip"
-	} else {
-		ext = "tar.gz"
-	}
-	filename := fmt.Sprintf("%s.%s-%s.%s", version, os, arch, ext)
-	dlurl, err := url.JoinPath(source, filename)
-	if err != nil {
-		return "", "", err
-	}
-	return dlurl, filename, err
-}
 
 func DownloadProcessBar(length int64, description string, finishedTip string) *progressbar.ProgressBar {
 	return progressbar.NewOptions64(length,
@@ -91,6 +29,20 @@ func DownloadProcessBar(length int64, description string, finishedTip string) *p
 			fmt.Fprint(os.Stdout, finishedTip)
 		}),
 	)
+}
+
+var buffer = make([]byte, 4096)
+
+// Extract extracts archive file to specified target path, only support .zip and .tar.gz
+func Extract(archive *os.File, target string) error {
+	name := archive.Name()
+	ctx := context.Background()
+	if strings.HasSuffix(name, "tar.gz") {
+		return ExtractTarGzip(ctx, archive, target)
+	} else if strings.HasSuffix(name, "zip") {
+		return ExtractZip(ctx, archive, target)
+	}
+	return errorx.Errorf("unsupported archive format: %s", filepath.Ext(name))
 }
 
 // ExtractTarGzip extract tar.gz from reader and save to target.
@@ -132,28 +84,10 @@ func extractHandler(target string) archiver.FileHandler {
 		}
 		defer archvieReader.Close()
 		// copy file to target
-		_, err = io.CopyBuffer(targetFile, archvieReader, Buffer)
+		_, err = io.CopyBuffer(targetFile, archvieReader, buffer)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-}
-
-func LocalList(ascend bool) ([]string, error) {
-	storeData, err := ReadStore()
-	if err != nil {
-		return nil, err
-	}
-	var localList []string
-	for version, _ := range storeData.Root {
-		localList = append(localList, version)
-	}
-	slices.SortFunc(localList, func(v1, v2 string) int {
-		return -CompareVersion(v1, v2)
-	})
-	if ascend {
-		slices.Reverse(localList)
-	}
-	return localList, nil
 }

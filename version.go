@@ -2,15 +2,10 @@ package govm
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
-	"os/exec"
-	"regexp"
 	"runtime"
 	"slices"
-	"strings"
-	"time"
 )
 
 type GoVersion struct {
@@ -20,26 +15,28 @@ type GoVersion struct {
 }
 
 type Version struct {
-	Filename string `json:"filename"`
-	Os       string `json:"os"`
-	Arch     string `json:"arch"`
-	Version  string `json:"version"`
-	Sha256   string `json:"sha256"`
-	Size     int64  `json:"size"`
-	Kind     string `json:"kind"`
+	Filename string `toml:"filename" json:"filename"`
+	Os       string `toml:"os" json:"os"`
+	Arch     string `toml:"arch" json:"arch"`
+	Version  string `toml:"version" json:"version"`
+	Sha256   string `toml:"sha256" json:"sha256"`
+	Size     uint64 `toml:"size" json:"size"`
+	Kind     string `toml:"kind" json:"kind"`
+	Path     string `toml:"path"`
 }
 
 // GetRemoteVersion returns all available go versions from versionURL without git.
-func GetRemoteVersion(ascend bool) ([]GoVersion, error) {
+// If unstable is false, it only returns stable versions, otherwise it returns all versions that includes unstable versions.
+func GetRemoteVersion(ascend, unstable bool) ([]Version, error) {
 	versionURL, err := GetVersionURL()
 	if err != nil {
 		return nil, err
 	}
 	httpClient, err := GetHttpClient()
-	httpClient.Timeout = time.Second * 10
 	if err != nil {
 		return nil, err
 	}
+	// get all versions from versionURL
 	response, err := httpClient.Get(fmt.Sprintf("%s?mode=json&include=all", versionURL))
 	if err != nil {
 		return nil, err
@@ -49,10 +46,31 @@ func GetRemoteVersion(ascend bool) ([]GoVersion, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ascend {
-		slices.Reverse(versions)
+
+	// filter by current os and arch
+	var filterVersions []Version
+	for _, goversion := range versions {
+		if !unstable && !goversion.Stable {
+			continue
+		}
+		for _, version := range goversion.Files {
+			if version.Kind == "archive" &&
+				version.Os == runtime.GOOS &&
+				version.Arch == runtime.GOARCH {
+				filterVersions = append(filterVersions, version)
+			}
+		}
 	}
-	return versions, nil
+
+	// sort by version
+	slices.SortFunc(filterVersions, func(v1, v2 Version) int {
+		if ascend {
+			return CompareVersion(v1.Version, v2.Version)
+		}
+		return -CompareVersion(v1.Version, v2.Version)
+	})
+
+	return filterVersions, nil
 }
 
 func ChooseDownloadURL(version string) (string, string, error) {
@@ -77,43 +95,21 @@ func ChooseDownloadURL(version string) (string, string, error) {
 	return dlurl, filename, err
 }
 
-var Buffer = make([]byte, 4096)
-
-const (
-	_GoGithubURL = "https://github.com/golang/go"
-)
-
-// match tags from ls-remote output
-var matchVersion = regexp.MustCompile(`refs/tags/go.+`)
-
-// GetGitRemoteVersions return all available go versions from remote git repository.
-// This way need to install git in local.
-func GetGitRemoteVersions(ascend bool) ([]string, error) {
-	// sort order by version
-	sortByVersion := "--sort=-version:refname"
-	if ascend {
-		sortByVersion = "--sort=version:refname"
-	}
-
-	// git ls--remote --tags --sort=version:refname _GoGithubURL
-	lsCmd := exec.Command("git", "ls-remote", "--tags", sortByVersion, _GoGithubURL)
-	output, err := lsCmd.Output()
+// GetLocalVersions returns the local versions from store.
+func GetLocalVersions(ascend bool) ([]Version, error) {
+	storeData, err := ReadStore()
 	if err != nil {
-		execErr := new(exec.ExitError)
-		if errors.As(err, &execErr) {
-			return nil, errors.New(bytes2string(execErr.Stderr))
-		}
 		return nil, err
 	}
-
-	// find all matched tags by regex
-	outputStr := bytes2string(output)
-	matches := matchVersion.FindAllString(outputStr, -1)
-
-	// trim prefix
-	var list []string
-	for _, match := range matches {
-		list = append(list, strings.TrimPrefix(match, "refs/tags/"))
+	var localList []Version
+	for _, v := range storeData.Root {
+		localList = append(localList, v)
 	}
-	return list, nil
+	slices.SortFunc(localList, func(v1, v2 Version) int {
+		if ascend {
+			return CompareVersion(v1.Version, v2.Version)
+		}
+		return -CompareVersion(v1.Version, v2.Version)
+	})
+	return localList, nil
 }

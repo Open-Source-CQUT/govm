@@ -7,19 +7,20 @@ import (
 )
 
 const (
-	DefaultStoreName = "store.toml"
+	storeFile = "store.toml"
 )
 
 type Store struct {
-	Root map[string]string `toml:"root"`
+	Use  string             `toml:"use"`
+	Root map[string]Version `toml:"root"`
 }
 
 func ReadStore() (*Store, error) {
-	store, err := GetRootStore()
+	store, err := GetInstallation()
 	if err != nil {
 		return nil, err
 	}
-	storeFile, err := OpenFile(filepath.Join(store, DefaultStoreName), os.O_CREATE|os.O_RDWR, 0644)
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -32,17 +33,17 @@ func ReadStore() (*Store, error) {
 
 	// initialize
 	if storeData.Root == nil {
-		storeData.Root = make(map[string]string)
+		storeData.Root = make(map[string]Version)
 	}
 	return &storeData, nil
 }
 
 func WriteStore(storeData *Store) error {
-	store, err := GetRootStore()
+	store, err := GetInstallation()
 	if err != nil {
 		return err
 	}
-	storeFile, err := OpenFile(filepath.Join(store, DefaultStoreName), os.O_CREATE|os.O_RDWR, 0644)
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

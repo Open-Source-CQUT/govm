@@ -1,17 +1,16 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/Open-Source-CQUT/govm"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 )
 
 var installCmd = &cobra.Command{
@@ -19,70 +18,92 @@ var installCmd = &cobra.Command{
 	Short:   "install specified version of go",
 	Aliases: []string{"i"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 { // install latest version
-			var latestVersion string
-			versions, err := govm.GetRemoteVersions(false)
-			if err != nil {
-				return err
-			}
-			if len(versions) > 0 {
-				latestVersion = versions[0]
-			}
-			return RunInstall(latestVersion)
-		} else if len(args) == 1 { // specified one version
-			return RunInstall(args[0])
-		} else { // specified multiple versions
-			for _, arg := range args {
-				err := RunInstall(arg)
-				if err != nil {
-					return err
-				}
-			}
+		var version string
+		if len(args) > 0 {
+			version = args[0]
 		}
-		return nil
+		return RunInstall(version)
 	},
 }
 
-func RunInstall(version string) error {
-	if !strings.HasPrefix(version, "go") {
-		version = "go" + version
+func RunInstall(v string) error {
+	var version string
+	if v != "" {
+		cv, ok := govm.CheckVersion(v)
+		if !ok {
+			return errorx.Warnf("invalid version: %s", v)
+		}
+		version = cv
 	}
-	if valid := govm.IsValidVersion(version); !valid {
-		return fmt.Errorf("invalid version: %s", version)
-	}
-	// check if is already installed
-	localList, err := govm.LocalList(false)
+
+	// get available versions
+	remoteVersions, err := govm.GetRemoteVersion(false, true)
 	if err != nil {
 		return err
 	}
-	if slices.Contains(localList, version) {
-		govm.Printf("%s already installed", version)
-		return nil
+
+	var downloadVersion govm.Version
+
+	// if not specified, use the latest available version
+	if (version == "") && len(remoteVersions) > 0 {
+		downloadVersion = remoteVersions[0]
+	} else {
+		filterVersions, err := Filter(remoteVersions, version, -1)
+		if err != nil {
+			return err
+		}
+		if len(filterVersions) == 0 {
+			return errorx.Warnf("no matching version found for %s", version)
+		}
+		// find the latest from the matched versions
+		// such as go1.22 -> go1.22.latest
+		downloadVersion = slices.MaxFunc(filterVersions, func(v1, v2 govm.Version) int {
+			return -govm.CompareVersion(v1.Version, v2.Version)
+		})
 	}
+
+	// check if is already installed
+	locals, err := govm.GetLocalVersions(false)
+	if err != nil {
+		return err
+	}
+	if slices.ContainsFunc(locals, func(v govm.Version) bool {
+		return v.Version == downloadVersion.Version
+	}) {
+		return errorx.Warnf("%s already installed", version)
+	}
+
 	// download the specified version
-	archiveFile, err := DownloadVersion(version)
+	archiveFile, err := DownloadVersion(downloadVersion.Version)
 	if err != nil {
 		return err
 	}
 	defer archiveFile.Close()
+
 	store, err := govm.GetRootStore()
 	if err != nil {
 		return err
 	}
-	storePath := filepath.Join(store, version)
-	if err = Extract(archiveFile, storePath); err != nil {
+	storePath := filepath.Join(store, downloadVersion.Version)
+
+	// extract
+	govm.Tipf("Extract %s to local store", filepath.Base(archiveFile.Name()))
+	if err = govm.Extract(archiveFile, storePath); err != nil {
 		return err
 	}
+
+	// store meta info
 	storeData, err := govm.ReadStore()
 	if err != nil {
 		return err
 	}
-	storeData.Root[version] = storePath
+	downloadVersion.Path = storePath
+	storeData.Root[downloadVersion.Version] = downloadVersion
 	err = govm.WriteStore(storeData)
 	if err != nil {
 		return err
 	}
-	govm.Printf("%s installed", version)
+	govm.Tipf("%s installed", downloadVersion.Version)
 	return nil
 }
 
@@ -104,25 +125,19 @@ func DownloadVersion(version string) (*os.File, error) {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	} else if err == nil { // found in cache
-		govm.Printf("Found %s from cache", version)
+		govm.Tipf("Found %s from cache", version)
 		return govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0644)
 	}
 
 	// find version from remote
-	remoteVersions, err := govm.GetRemoteVersions(false)
-	if err != nil {
-		return nil, err
-	}
-	if !slices.Contains(remoteVersions, version) {
-		return nil, fmt.Errorf("version %s not found", version)
-	}
-	govm.Printf("Found %s from remote", version)
+	govm.Tipf("Found %s from %s", version, downloadURL)
 
 	// not in cache, download from remote
 	client, err := govm.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
+	client.Timeout = 0
 	request, _ := http.NewRequest("GET", downloadURL, nil)
 	response, err := client.Do(request)
 	if err != nil {
@@ -148,15 +163,4 @@ func DownloadVersion(version string) (*os.File, error) {
 		return nil, err
 	}
 	return cacheFile, nil
-}
-
-func Extract(archive *os.File, target string) error {
-	name := archive.Name()
-	ctx := context.Background()
-	if strings.HasSuffix(name, "tar.gz") {
-		return govm.ExtractTarGzip(ctx, archive, target)
-	} else if strings.HasSuffix(name, "zip") {
-		return govm.ExtractZip(ctx, archive, target)
-	}
-	return fmt.Errorf("unsupported archive format: %s", filepath.Ext(name))
 }

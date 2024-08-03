@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/Open-Source-CQUT/govm"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"regexp"
-	"strings"
 )
 
 var (
@@ -13,14 +13,10 @@ var (
 	lines int
 	// sort by version in ascending order
 	ascend bool
-	// only show beta versions
-	showBeta bool
-	// only show rc versions
-	showRc bool
-	// only show release versions
-	showRelease bool
 	// show count of matching versions
 	showCount bool
+	// include unstable versions
+	unstable bool
 )
 
 const defaultLines = 20
@@ -33,14 +29,16 @@ var searchCmd = &cobra.Command{
 		if len(args) > 0 {
 			pattern = args[0]
 		}
-		result, err := RunSearch(pattern, lines, ascend, showRelease, showBeta, showRc)
+		result, err := RunSearch(pattern, lines, ascend, unstable)
 		if err != nil {
 			return err
 		}
 		if showCount {
 			fmt.Println(len(result))
 		} else {
-			fmt.Println(strings.Join(result, "\n"))
+			for _, version := range result {
+				fmt.Printf("%6s\t%-10s\t%8s\n", version.Sha256[:6], version.Version, humanize.Bytes(version.Size))
+			}
 		}
 		return nil
 	},
@@ -50,30 +48,25 @@ func init() {
 	searchCmd.Flags().IntVarP(&lines, "lines", "n", defaultLines, "number of lines to display, list all if n=-1")
 	searchCmd.Flags().BoolVarP(&showCount, "count", "c", false, "show count of matching versions")
 	searchCmd.Flags().BoolVar(&ascend, "ascend", false, "sort by version in ascending order")
-	searchCmd.Flags().BoolVar(&showBeta, "beta", false, "only show beta versions")
-	searchCmd.Flags().BoolVar(&showRc, "rc", false, "only show rc versions")
-	searchCmd.Flags().BoolVar(&showRelease, "release", false, "only show release versions")
+	searchCmd.Flags().BoolVar(&unstable, "unstable", false, "show unstable versions")
 }
 
-func RunSearch(pattern string, lines int, ascend, release, beta, rc bool) ([]string, error) {
+func RunSearch(pattern string, lines int, ascend, unstable bool) ([]govm.Version, error) {
 	// get remote versions
-	remoteVersions, err := govm.GetRemoteVersions(ascend)
+	remoteVersions, err := govm.GetRemoteVersion(ascend, unstable)
 	if err != nil {
 		return nil, err
 	}
-	return Filter(remoteVersions, pattern, lines, release, beta, rc)
+	return Filter(remoteVersions, pattern, lines)
 }
 
-func Filter(versions []string, pattern string, lines int, release, beta, rc bool) ([]string, error) {
+func Filter(versions []govm.Version, pattern string, lines int) ([]govm.Version, error) {
 	// match versions with pattern
 	patternMatch := regexp.MustCompile(fmt.Sprintf(`(%s)`, pattern))
-	var matchedVersions []string
+	var matchedVersions []govm.Version
 	if len(pattern) > 0 {
 		for _, version := range versions {
-			if len(matchedVersions) >= lines {
-				break
-			}
-			if patternMatch.MatchString(version) {
+			if patternMatch.MatchString(version.Version) {
 				matchedVersions = append(matchedVersions, version)
 			}
 		}
@@ -81,27 +74,11 @@ func Filter(versions []string, pattern string, lines int, release, beta, rc bool
 		matchedVersions = versions
 	}
 
-	// filter by beta or rc
-	var result []string
-	if release || beta || rc {
-		for _, version := range matchedVersions {
-			if (beta && strings.Contains(version, "beta")) ||
-				(rc && strings.Contains(version, "rc")) ||
-				(release && !strings.Contains(version, "beta") && !strings.Contains(version, "rc")) {
-				result = append(result, version)
-			}
-		}
-	} else {
-		result = matchedVersions
-	}
-
 	// truncate to specified lines
 	if lines == 0 {
 		lines = defaultLines
-	} else if lines < 0 {
-		lines = len(result)
-	} else if lines > len(result) {
-		lines = len(result)
+	} else if lines < 0 || lines > len(matchedVersions) {
+		lines = len(matchedVersions)
 	}
-	return result[:lines], nil
+	return matchedVersions[:lines], nil
 }

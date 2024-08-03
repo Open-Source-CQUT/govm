@@ -2,46 +2,61 @@ package main
 
 import (
 	"github.com/Open-Source-CQUT/govm"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"os"
-	"strings"
+	"slices"
 )
 
 var uninstallCmd = &cobra.Command{
 	Use:     "uninstall",
 	Short:   "uninstall specified version of go",
-	Aliases: []string{"rm"},
+	Aliases: []string{"ui"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			govm.Println("no version specified")
-			return nil
+		var version string
+		if len(args) > 0 {
+			version = args[0]
 		}
-		for _, version := range args {
-			err := RunUninstall(version)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return RunUninstall(version)
 	},
 }
 
-func RunUninstall(version string) error {
-	if !strings.HasPrefix(version, "go") {
-		version = "go" + version
+func RunUninstall(v string) error {
+	if v == "" {
+		return errorx.Warn("no version specified")
 	}
+
+	// check versions
+	version, ok := govm.CheckVersion(v)
+	if !ok {
+		return errorx.Warnf("invliad version %s", v)
+	}
+
+	// check if is already installed
+	locals, err := govm.GetLocalVersions(false)
+	installed := slices.ContainsFunc(locals, func(v govm.Version) bool {
+		return v.Version == version
+	})
+	if !installed {
+		return errorx.Warnf("%s not installed", v)
+	}
+
 	storeData, err := govm.ReadStore()
 	if err != nil {
 		return err
 	}
-	loc, found := storeData.Root[version]
-	if !found {
-		govm.Printf("%s not found in store", version)
-		return nil
-	}
-	if err := os.RemoveAll(loc); err != nil {
+	removedPath := storeData.Root[version].Path
+	delete(storeData.Root, version)
+	err = govm.WriteStore(storeData)
+	if err != nil {
 		return err
 	}
-	delete(storeData.Root, version)
-	return govm.WriteStore(storeData)
+
+	// remove from store
+	if err := os.RemoveAll(removedPath); err != nil {
+		return err
+	}
+	govm.Tipf("%s uninstalled", v)
+
+	return nil
 }

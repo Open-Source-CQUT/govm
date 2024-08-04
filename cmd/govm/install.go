@@ -47,9 +47,14 @@ func RunInstall(v string) error {
 
 	var downloadVersion govm.Version
 
-	// if not specified, use the latest available version
+	// if not specified, use the latest stable version
 	if (version == "") && len(remoteVersions) > 0 {
-		downloadVersion = remoteVersions[0]
+		for _, remoteVersion := range remoteVersions {
+			if remoteVersion.Stable {
+				downloadVersion = remoteVersion
+				break
+			}
+		}
 	} else {
 		filterVersions, err := Filter(remoteVersions, version, -1)
 		if err != nil {
@@ -73,7 +78,7 @@ func RunInstall(v string) error {
 	if slices.ContainsFunc(locals, func(v govm.Version) bool {
 		return v.Version == downloadVersion.Version
 	}) {
-		return errorx.Warnf("%s already installed", version)
+		return errorx.Warnf("%s already installed", downloadVersion.Version)
 	}
 
 	// download the specified version

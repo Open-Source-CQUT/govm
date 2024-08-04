@@ -24,6 +24,7 @@ type Version struct {
 	Kind     string `toml:"kind" json:"kind"`
 	Path     string `toml:"path"`
 	Using    bool
+	Stable   bool
 }
 
 // GetRemoteVersion returns all available go versions from versionURL without git.
@@ -58,6 +59,7 @@ func GetRemoteVersion(ascend, unstable bool) ([]Version, error) {
 			if version.Kind == "archive" &&
 				version.Os == runtime.GOOS &&
 				version.Arch == runtime.GOARCH {
+				version.Stable = goversion.Stable
 				filterVersions = append(filterVersions, version)
 			}
 		}

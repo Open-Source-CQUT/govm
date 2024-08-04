@@ -34,6 +34,7 @@ func RunClean() error {
 		if err != nil {
 			return err
 		}
+		cacheCount++
 	}
 	govm.Tipf("Clean cache files %d", cacheCount)
 
@@ -57,7 +58,6 @@ func RunClean() error {
 			err := os.RemoveAll(filepath.Join(rootStore, entry.Name()))
 			if err != nil {
 				return err
-
 			}
 			redundantCount++
 		}

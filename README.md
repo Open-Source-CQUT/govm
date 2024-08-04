@@ -2,7 +2,7 @@
 
 # govm
 
-govm是一个用于管理本地go版本的命令行工具，可以让你更简单和快速地切换不同的go版本，将更多注意力放在开发工作上。它是我结合平时使用习惯和借鉴了其他类似的开源工具而编写出来的一个小工具，由于它是纯go编写，所以应该能支持大部分的主流平台。
+govm是一个用于管理本地go版本的命令行工具，可以让你更简单和快速地切换不同的go版本，将更多注意力放在开发工作上。它是我结合平时使用习惯和借鉴了其他同类的开源工具而编写出来的一个小工具，由于它是纯go编写，所以应该能支持大部分的主流平台。
 
 
 
@@ -59,22 +59,20 @@ govm version v1.0.0 linux/amd64
 
 ### 快速开始
 
+
+
+#### linux
+
 使用install命令下载最新版
 
 ```bash
 $ govm install
 ```
 
-在linux，macos系统下设置环境变量，此方法适用于gitbash for windows
+在linux下设置环境变量
 
 ```bash
-$ govm profile >> $HOME/.profile && source $HOME/.profile
-```
-
-在powershell中设置环境变量，需新开powershell生效
-
-```powershell
-PS C:\Users\Administrator> setx /M PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
+$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
 ```
 
 测试go是否可用
@@ -86,17 +84,85 @@ go version go1.22.5 linux/amd64
 
 
 
+#### macos
+
+使用install命令下载最新版
+
+```bash
+$ govm install
+```
+
+在macos下设置环境变量
+
+```bash
+$ echo 'eval "$(govm profile)"' >> $HOME/.zsh && source $HOME/.zsh
+```
+
+测试go是否可用
+
+```bash
+$ go version
+go version go1.22.5 darwin/amd64
+```
+
+
+
+#### windows
+
+**gitbash**
+
+```bash
+$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
+```
+
+**powershell**
+
+设置环境变量，需新开powershell生效
+
+```powershell
+> setx PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
+```
+
+测试go是否可用
+
+```bash
+$ go version
+go version go1.22.5 windows/amd64
+```
+
+
+
+通过命令`govm help` 查看更多使用方法。
+
+
+
+## 配置
+
+govm的配置文件在所有系统中都存放在`$HOME/.govm/config.toml`中，通过如下命令可以查看配置
+
+```bash
+$ govm config
+listapi=https://go.dev/dl/?mode=json&include=all
+mirror=https://dl.google.com/go/
+proxy=
+install=/usr/local/govm/
+```
+
+
+
 ### 镜像
 
 govm的默认下载镜像是使用go官网，中国用户建议使用后两个
 
-- 谷歌：`https://dl.google.com/go/`
-
+- 谷歌：`https://dl.google.com/go/`，默认
 - 阿里云：`https://mirrors.aliyun.com/golang/`
-
 - 南京大学：`https://mirrors.nju.edu.cn/golang/`
 
-中科大虽然也有go镜像，但是会报403，不建议使用。
+**中科大虽然也有go镜像，但是会报403，不推荐使用**。使用如下命令修改镜像
+
+```bash
+$ govm cfg -w proxy=https://mirrors.aliyun.com/golang/
+```
 
 
 
@@ -108,5 +174,29 @@ govm的默认下载镜像是使用go官网，中国用户建议使用后两个
 https://go.dev/dl/?mode=json&include=all
 ```
 
-国内用户应该是比较难访问的，不过这是一个可配置项，可以自行修改。
+国内用户应该是比较难访问的，不过这是一个可配置项，可以自行搭建CDN，按照如下命令修改
+
+```bash
+$ govm cfg -w listapi=your_cdn
+```
+
+
+
+### 代理
+
+默认情况下使用系统代理 ，也可以手动指定代理，使用如下命令修改
+
+```bash
+$ govm cfg -w proxy=your_proxy
+```
+
+
+
+### 安装路径
+
+对于windows而言，默认安装路径在`$HOME/AppData/Local/govm`，对于Linux，Macos而言，默认存放位置在`/usr/local/govm`。使用如下命令修改
+
+```bash
+$ govm cfg -w install=new_pos
+```
 

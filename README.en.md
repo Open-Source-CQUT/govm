@@ -2,110 +2,186 @@
 
 # govm
 
-GOVM is a command line tool for managing the local GO version, which allows you to switch different GO versions simpler and quickly and put more attention on development. It is a small tool written by my usual use habits and borrowing other similar open source tools. Since it is written in pure Go, it should be able to support most mainstream platforms.
+govm is a command line tool for managing local go versions, which allows you to switch between different go versions more easily and quickly, and focus more on development work. It is a small tool that I wrote based on my usual usage habits and other similar open source tools. Since it is written in pure go, it should support most mainstream platforms.
 
 
 
-## Install
+## Installation
 
 
 
-### download
+### Download
 
-If you have a GO environment and the version is greater than Go1.16, you can use Go Install to install
+If you have a go environment and the version is greater than go1.16, you can use go install to install
 
-`` `Bash
-$ Go Install github.com/open-source-cqut/govm/govm@latest
-`` `
+```bash
+$ go install github.com/Open-Source-CQUT/govm/cmd/govm@latest
+```
 
-Or you can download the latest version of the binary files of the corresponding platform in [Release] (https://github.com/open-source-cqut/Govm/releases). At present, only the distribution of Windows, Macos, and Linux.
+Or you can download the latest version of the binary file for the corresponding platform in [Release](https://github.com/Open-Source-CQUT/govm/releases). Currently, only three platforms, windows, macos, and linux, are available.
 
 
 
-### Compilation
+### Compile
 
-If you are a user of other platforms, go to [Go SUPPORTED PLATFORMS] (https://github.com/golang/go/blob/master/cmd/dist/build.go1727), and then what platforms are the specific support support. Declarily compile according to the following steps.
+If you are a user of other platforms, go to [Go supported platforms](https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1727) to check which platforms are supported, and then follow the steps below to compile it yourself.
 
-First clone the source code to the local area
+First clone the source code to your local
 
-`` `Bash
-$ git clone https://github.com/open-source-cqut/govm.git
-`` `
+```bash
+$ git clone https://github.com/Open-Source-CQUT/govm.git
+```
 
 Switch to a specific version
 
-`` `Bash
+```bash
 $ git checkout tags/v1.0.0
-`` `
+```
 
-Make sure you have installed the Go compiler and make locally, and then use your OS and Arch as a parameter. The example is as follows
+Make sure you have the go compiler and make installed locally, and then execute your os and arch as parameters, as shown below
 
-`` `Bash
-$ Make Build Mode = Release OS = Linux Arch = AMD64
-`` `
+```bash
+$ make build mode=release os=linux arch=amd64
+```
 
-Then generate a binary file that is compiled in the current project's `./Bin/release/` directory. The following commands are executed to see if it runs normally.
+Then the compiled binary file will be generated in the `./bin/release/` directory of the current project. Execute the following command to check if it runs normally. The following output indicates that the compilation is successful.
 
-`` `Bash
-$ ./govm -V
-Govm Version v1.0.0 Linux/AMD64
-`` `
+```bash
+$ ./govm -v
+govm version v1.0.0 linux/amd64
+```
+
+## Use
+
+### Quick Start
+
+#### linux
+
+Use the install command to download the latest version
+
+```bash
+$ govm install
+```
+
+Set environment variables under linux
+
+```bash
+$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
+```
+
+Test whether go is available
+
+```bash
+$ go version
+go version go1.22.5 linux/amd64
+```
+
+#### macos
+
+Use the install command to download the latest version
+
+```bash
+$ govm install
+```
+
+Set environment variables under macos
+
+```bash
+$ echo 'eval "$(govm profile)"' >> $HOME/.zsh && source $HOME/.zsh
+```
+
+Test whether go is available
+
+```bash
+$ go version
+go version go1.22.5 darwin/amd64
+```
+
+#### windows
+
+**gitbash**
+
+```bash
+$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
+```
+
+**powershell**
+
+Set environment variables, need to open a new powershell to take effect
+
+```powershell
+> setx PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
+```
+
+Test whether go is available
+
+```bash
+$ go version
+go version go1.22.5 windows/amd64
+```
+
+View more usage methods through the command `govm help`.
+
+## Configuration
+
+The configuration file of govm is stored in `$HOME/.govm/config.toml` in all systems. You can view the configuration by the following command
+
+```bash
+$ govm config
+listapi=https://go.dev/dl/?mode=json&include=all
+mirror=https://dl.google.com/go/
+proxy=
+install=/usr/local/govm/
+```
 
 
 
-## use
+### Mirror
+
+The default download mirror of govm is to use the go official website. Chinese users are recommended to use the latter two
+
+- Google: `https://dl.google.com/go/`, default
+- Alibaba Cloud: `https://mirrors.aliyun.com/golang/`
+- Nanjing University: `https://mirrors.nju.edu.cn/golang/`
+
+ Use the following command to modify the mirror
+
+```bash
+$ govm cfg -w proxy=https://mirrors.aliyun.com/golang/
+```
 
 
 
-### Fast start
+### Version list
 
-Use the Install command to download the latest version
+The default version list uses the API provided by go officially
 
-`` `Bash
-$ GOVM Install
-`` `
-
-Set up environmental variables under Linux, MacOS system, this method is suitable for gitbash for Windows
-
-`` `Bash
-$ GOVM Profile >> $ HOME/.profile && Source $ Home/.profile
-`` `
-
-Set up environmental variables in Powershell, you need to open PowerShell to take effect
-
-`` `PowerShell
-PS C: \ Users \ Administrator> Setx /M Path "$ ENV: Path; $ ENV: Userprofile \ .govm \ ROOT \ GO \ BIN" ""
-`` `
-
-Test whether it is available
-
-`` `Bash
-$ Go Version
-Go Version Go1.22.5 Linux/AMD64
-`` `
-
-
-
-### mirror
-
-GOVM's default download mirror is used to use Go official website. Chinese users suggest that the post -use two latter two
-
--Google: `https: // dl.google.com/Go/`
-
--Alibaba Cloud: `https: // mirrs.aliyun.com/Golang/`
-
--Nanjing University: `https: // mirrs.nju.edu.cn/Golang/`
-
-Although the University of Science and Technology also has GO mirror, it will be reported 403, and it is not recommended.
-
-
-
-### version list
-
-The default version list uses the official API provided by Go
-
-`` `
+```
 https://go.dev/dl/?mode=json&include=all
-`` `
+```
 
-Chinese users should be more difficult to access, but this is a configurable item that can be modified by itself.
+It should be difficult for chinese users to access, but this is a configurable item. You can build a CDN by yourself and modify it according to the following command
+
+```bash
+$ govm cfg -w listapi=your_cdn
+```
+
+
+
+### Proxy
+
+The system proxy is used by default, and you can also manually specify the proxy. Use the following command to modify
+
+```bash
+$ govm cfg -w proxy=your_proxy
+```
+
+
+
+### Installation path
+
+For Windows, the default installation path is `$HOME/AppData/Local/govm`, and for Linux and MacOS, the default storage location is `/usr/local/govm`. Use the following command to modify
+
+```bash
+$ govm cfg -w install=new_pos
+```

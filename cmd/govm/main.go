@@ -6,6 +6,7 @@ import (
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"os"
+	"runtime"
 )
 
 var (
@@ -22,12 +23,13 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.SetVersionTemplate("{{.Version}}")
+	rootCmd.SetVersionTemplate(fmt.Sprintf("govm version {{.Version}} %s", runtime.GOOS+"/"+runtime.GOARCH))
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(useCmd)
+	rootCmd.AddCommand(currentCmd)
 	rootCmd.AddCommand(cleanCmd)
 }
 

@@ -170,7 +170,7 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 
 	h64 := make([]byte, 64)
 	hex.Encode(h64, hash.Sum(nil))
-	if bytes.Equal(h64, govm.String2bytes(version.Sha256)) {
+	if !bytes.Equal(h64, govm.String2bytes(version.Sha256)) {
 		return cacheFile, errorx.Error("sha256 hash check failed")
 	}
 

@@ -2,6 +2,7 @@ package govm
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/mholt/archiver/v4"
@@ -31,7 +32,7 @@ func DownloadProcessBar(length int64, description string, finishedTip string) *p
 	)
 }
 
-var buffer = make([]byte, 4096)
+var _Buffer = make([]byte, 4096)
 
 // Extract extracts archive file to specified target path, only support .zip and .tar.gz
 func Extract(archive *os.File, target string) error {
@@ -84,10 +85,23 @@ func extractHandler(target string) archiver.FileHandler {
 		}
 		defer archvieReader.Close()
 		// copy file to target
-		_, err = io.CopyBuffer(targetFile, archvieReader, buffer)
+		_, err = io.CopyBuffer(targetFile, archvieReader, _Buffer)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
+}
+
+// CheckSha256 check sha256 of file and compare with given sum.
+func CheckSha256(reader io.Reader, sum string) error {
+	hash := sha256.New()
+	_, err := io.CopyBuffer(hash, reader, _Buffer)
+	if err != nil {
+		return err
+	}
+	if Bytes2string(hash.Sum(nil)) != sum {
+		return errorx.Error("sha256 hash check failed")
+	}
+	return nil
 }

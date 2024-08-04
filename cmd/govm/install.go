@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/Open-Source-CQUT/govm"
@@ -74,8 +77,12 @@ func RunInstall(v string) error {
 	}
 
 	// download the specified version
-	archiveFile, err := DownloadVersion(downloadVersion.Version)
+	archiveFile, err := DownloadVersion(downloadVersion)
 	if err != nil {
+		if archiveFile != nil {
+			archiveFile.Close()
+			os.Remove(archiveFile.Name())
+		}
 		return err
 	}
 	defer archiveFile.Close()
@@ -109,10 +116,10 @@ func RunInstall(v string) error {
 
 // DownloadVersion downloads the specified version of go, and returns the downloaded archive file.
 // The archive file be closed by the caller.
-func DownloadVersion(version string) (*os.File, error) {
+func DownloadVersion(version govm.Version) (*os.File, error) {
 
 	// check if version already in the cache
-	downloadURL, filename, err := govm.ChooseDownloadURL(version)
+	downloadURL, filename, err := govm.ChooseDownloadURL(version.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -125,12 +132,12 @@ func DownloadVersion(version string) (*os.File, error) {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	} else if err == nil { // found in cache
-		govm.Tipf("Found %s from cache", version)
+		govm.Tipf("Found %s from cache", version.Version)
 		return govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0644)
 	}
 
 	// find version from remote
-	govm.Tipf("Found %s from %s", version, downloadURL)
+	govm.Tipf("Found %s from %s", version.Version, downloadURL)
 
 	// not in cache, download from remote
 	client, err := govm.GetHttpClient()
@@ -152,15 +159,25 @@ func DownloadVersion(version string) (*os.File, error) {
 	processBar := govm.DownloadProcessBar(response.ContentLength,
 		fmt.Sprintf("Downloading %s", filename), "\n")
 
+	// sha256 hash writer
+	hash := sha256.New()
+
 	// copy to cache file
-	_, err = io.CopyBuffer(io.MultiWriter(processBar, cacheFile), response.Body, make([]byte, 4096))
+	_, err = io.CopyBuffer(io.MultiWriter(hash, processBar, cacheFile), response.Body, make([]byte, 4096))
 	if err != nil {
-		return nil, err
+		return cacheFile, err
 	}
+
+	h64 := make([]byte, 64)
+	hex.Encode(h64, hash.Sum(nil))
+	if bytes.Equal(h64, govm.String2bytes(version.Sha256)) {
+		return cacheFile, errorx.Error("sha256 hash check failed")
+	}
+
 	// seek to start
 	_, err = cacheFile.Seek(0, io.SeekStart)
 	if err != nil {
-		return nil, err
+		return cacheFile, err
 	}
 	return cacheFile, nil
 }

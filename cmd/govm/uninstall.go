@@ -10,7 +10,7 @@ import (
 
 var uninstallCmd = &cobra.Command{
 	Use:     "uninstall",
-	Short:   "uninstall specified version of go",
+	Short:   "uninstall specified Go version",
 	Aliases: []string{"ui"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var version string

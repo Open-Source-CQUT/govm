@@ -8,7 +8,7 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "list local Go versions",
+	Short:   "list local installed Go versions",
 	Aliases: []string{"ls"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var pattern string

@@ -9,7 +9,7 @@ import (
 
 var profileCmd = &cobra.Command{
 	Use:   "profile",
-	Short: "show profile scripts",
+	Short: "show profile env",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		script, err := RunProfile()
 		if err != nil {

@@ -18,7 +18,7 @@ import (
 
 var installCmd = &cobra.Command{
 	Use:     "install",
-	Short:   "install specified version of go",
+	Short:   "install specified Go version",
 	Aliases: []string{"i"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var version string

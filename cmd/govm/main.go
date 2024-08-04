@@ -19,8 +19,7 @@ var rootCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Version:       Version,
-	Short:         "Go Version Manager",
-	Long:          "Go Version Manager",
+	Short:         "govm is a tool to manage local Go versions",
 }
 
 func init() {

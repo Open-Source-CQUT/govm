@@ -1,6 +1,7 @@
 package govm
 
 import (
+	"fmt"
 	"github.com/pelletier/go-toml/v2"
 	"net/http"
 	"net/url"
@@ -16,11 +17,16 @@ const (
 )
 
 type Config struct {
-	VersionURL  string `toml:"versionURL,commented" comment:"where to query Go versions, default https://go.dev/dl/?mode=json&include=all"`
-	DownloadURL string `toml:"downloadURL,commented" comment:"download URL for Go release archive, default https://dl.google.com/go/"`
-	Proxy       string `toml:"proxy,commented" comment:"proxy for HTTP requests, default use system proxy"`
-	Cache       string `toml:"cache,commented" comment:"where to cache downloaded archives, default $HOME/.govm/cache/"`
-	Install     string `toml:"install,commented" comment:"where to install Go, windows: $HOME/AppData/Local/govm-store/root/ "`
+	// where to query Go versions, default https://go.dev/dl/?mode=json&include=all
+	ListAPI string `toml:"listapi,commented"`
+	// download URL for Go release archive, default https://dl.google.com/go/
+	Mirror string `toml:"mirror,commented"`
+	// proxy for HTTP requests, default use system proxy
+	Proxy string `toml:"proxy,commented"`
+	// where to cache downloaded archives, default $HOME/.govm/cache/
+	Cache string `toml:"cache,commented"`
+	// where to install Go, windows: $HOME/AppData/Local/govm-store/root/
+	Install string `toml:"install,commented"`
 
 	dir string
 }
@@ -84,7 +90,7 @@ const (
 	_GoDLVersionURL = "https://go.dev/dl/"
 )
 
-func GetVersionURL() (string, error) {
+func GetVersionListAPI() (string, error) {
 	envVersionURL, found := os.LookupEnv(_EnvVersionURL)
 	if found {
 		return envVersionURL, nil
@@ -92,36 +98,34 @@ func GetVersionURL() (string, error) {
 	config, err := ReadConfig()
 	if err != nil {
 		return "", err
-	} else if config.VersionURL != "" {
-		return config.VersionURL, nil
+	} else if config.ListAPI != "" {
+		return config.ListAPI, nil
 	}
 	return _GoDLVersionURL, nil
 }
 
 const (
-	_EnvDownloadURL = "GOVM_DOWNLOAD"
+	_EnvMirror = "GOVM_MIRROR"
 	// eg. https://dl.google.com/go/go1.22.5.linux-amd64.tar.gz
-	_GoogleDownloadURL = "https://dl.google.com/go/"
+	_GoogleMirror = "https://dl.google.com/go/"
 	// eg. https://mirrors.aliyun.com/golang/go1.10.1.linux-amd64.tar.gz
-	_AliCloudDL = "https://mirrors.aliyun.com/golang/"
-	// eg. https://mirrors.ustc.edu.cn/golang/go1.10.2.freebsd-386.tar.gz.asc
-	_USTCDownloadURL = "https://mirrors.ustc.edu.cn/golang/"
-	// eg. https://go.dev/dl/go1.22.5.windows-amd64.msi.sha256
+	_AliCloudMirror = "https://mirrors.aliyun.com/golang/"
+	// eg. https://mirrors.nju.edu.cn/golang/go1.22.5.windows-amd64.msi.sha256
 	_NJUDownloadURL = "https://mirrors.nju.edu.cn/golang/"
 )
 
-func GetDownloadURL() (string, error) {
-	envDownloadURL, found := os.LookupEnv(_EnvDownloadURL)
+func GetMirror() (string, error) {
+	envDownloadURL, found := os.LookupEnv(_EnvMirror)
 	if found {
 		return envDownloadURL, nil
 	}
 	config, err := ReadConfig()
 	if err != nil {
 		return "", err
-	} else if config.DownloadURL != "" {
-		return config.DownloadURL, err
+	} else if config.Mirror != "" {
+		return config.Mirror, err
 	}
-	return _GoogleDownloadURL, nil
+	return _GoogleMirror, nil
 }
 
 const (
@@ -196,15 +200,28 @@ func GetInstallation() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return filepath.Join(homeDir, "AppData", "Local", "govm-store"), nil
+		return filepath.Join(homeDir, "/AppData/Local/govm"), nil
 	}
 	return _DefaultLinuxInstallation, err
 }
 
-func GetRootStore() (string, error) {
-	installation, err := GetInstallation()
+const _Profile = "profile"
+
+func GetProfile() (string, error) {
+	dir, err := GetConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(installation, "root"), nil
+	return filepath.Join(dir, _Profile), nil
+}
+
+func GetProfileContent() (string, error) {
+	rootSymLink, err := GetRootSymLink()
+	if err != nil {
+		return "", err
+	}
+
+	tmpl := `export GOROOT="%s"
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin`
+	return fmt.Sprintf(tmpl, filepath.Join(rootSymLink, "go")), err
 }

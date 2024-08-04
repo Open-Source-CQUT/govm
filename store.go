@@ -50,3 +50,23 @@ func WriteStore(storeData *Store) error {
 	defer storeFile.Close()
 	return toml.NewEncoder(storeFile).Encode(storeData)
 }
+
+const _RootDir = "root"
+
+func GetRootSymLink() (string, error) {
+	installation, err := GetInstallation()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(installation, _RootDir), nil
+}
+
+const _StoreDir = "store"
+
+func GetStoreDir() (string, error) {
+	installation, err := GetInstallation()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(installation, _StoreDir), nil
+}

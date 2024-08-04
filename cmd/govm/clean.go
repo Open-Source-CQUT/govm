@@ -43,11 +43,11 @@ func RunClean() error {
 	if err != nil {
 		return err
 	}
-	rootStore, err := govm.GetRootStore()
+	storeDir, err := govm.GetStoreDir()
 	if err != nil {
 		return err
 	}
-	dirEntries, err := os.ReadDir(rootStore)
+	dirEntries, err := os.ReadDir(storeDir)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func RunClean() error {
 	for _, entry := range dirEntries {
 		// it is a redundant version if not in store
 		if _, ok := storeData.Root[entry.Name()]; !ok {
-			err := os.RemoveAll(filepath.Join(rootStore, entry.Name()))
+			err := os.RemoveAll(filepath.Join(storeDir, entry.Name()))
 			if err != nil {
 				return err
 			}

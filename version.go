@@ -23,12 +23,13 @@ type Version struct {
 	Size     uint64 `toml:"size" json:"size"`
 	Kind     string `toml:"kind" json:"kind"`
 	Path     string `toml:"path"`
+	Using    bool
 }
 
 // GetRemoteVersion returns all available go versions from versionURL without git.
 // If unstable is false, it only returns stable versions, otherwise it returns all versions that includes unstable versions.
 func GetRemoteVersion(ascend, unstable bool) ([]Version, error) {
-	versionURL, err := GetVersionURL()
+	versionURL, err := GetVersionListAPI()
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func GetRemoteVersion(ascend, unstable bool) ([]Version, error) {
 }
 
 func ChooseDownloadURL(version string) (string, string, error) {
-	source, err := GetDownloadURL()
+	source, err := GetMirror()
 	if err != nil {
 		return "", "", err
 	}
@@ -103,6 +104,9 @@ func GetLocalVersions(ascend bool) ([]Version, error) {
 	}
 	var localList []Version
 	for _, v := range storeData.Root {
+		if storeData.Use == v.Version {
+			v.Using = true
+		}
 		localList = append(localList, v)
 	}
 	slices.SortFunc(localList, func(v1, v2 Version) int {

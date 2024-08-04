@@ -23,7 +23,11 @@ var listCmd = &cobra.Command{
 			fmt.Println(len(localList))
 		} else {
 			for _, version := range localList {
-				fmt.Printf("%s", version.Version)
+				if version.Using {
+					fmt.Printf("%s (*)\n", version.Version)
+				} else {
+					fmt.Printf("%s\n", version.Version)
+				}
 			}
 		}
 		return nil

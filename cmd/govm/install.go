@@ -87,7 +87,7 @@ func RunInstall(v string) error {
 	}
 	defer archiveFile.Close()
 
-	store, err := govm.GetRootStore()
+	store, err := govm.GetStoreDir()
 	if err != nil {
 		return err
 	}
@@ -144,11 +144,15 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	// unset default timeout
 	client.Timeout = 0
 	request, _ := http.NewRequest("GET", downloadURL, nil)
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, err
+	}
+	if response.StatusCode != 200 {
+		return nil, errorx.Errorf("download failed: %s", response.Status)
 	}
 	cacheFile, err := govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {

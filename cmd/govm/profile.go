@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/Open-Source-CQUT/govm"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var profileCmd = &cobra.Command{
@@ -19,9 +21,13 @@ var profileCmd = &cobra.Command{
 }
 
 func RunProfile() (string, error) {
-	profile, err := useProfile()
+	profilepath, err := govm.GetProfile()
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("source %s", profile), nil
+	profile, err := os.ReadFile(profilepath)
+	if err != nil {
+		return "", err
+	}
+	return govm.Bytes2string(profile), nil
 }

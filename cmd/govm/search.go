@@ -37,7 +37,7 @@ var searchCmd = &cobra.Command{
 			fmt.Println(len(result))
 		} else {
 			for _, version := range result {
-				fmt.Printf("%6s\t%-10s\t%8s\n", version.Sha256[:6], version.Version, humanize.Bytes(version.Size))
+				fmt.Printf("%-10s\t%8s\n", version.Version, humanize.Bytes(version.Size))
 			}
 		}
 		return nil

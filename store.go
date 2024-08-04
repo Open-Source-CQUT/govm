@@ -54,11 +54,11 @@ func WriteStore(storeData *Store) error {
 const _RootDir = "root"
 
 func GetRootSymLink() (string, error) {
-	installation, err := GetInstallation()
+	cfg, err := GetConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(installation, _RootDir), nil
+	return filepath.Join(cfg, _RootDir), nil
 }
 
 const _StoreDir = "store"

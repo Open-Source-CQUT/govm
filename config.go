@@ -87,7 +87,7 @@ func WriteConfig(cfg *Config) error {
 
 const (
 	_EnvVersionURL  = "GOVM_VERSION"
-	_GoDLVersionURL = "https://go.dev/dl/"
+	_GoDLVersionURL = "https://go.dev/dl/?mode=json&include=all"
 )
 
 func GetVersionListAPI() (string, error) {

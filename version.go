@@ -38,7 +38,7 @@ func GetRemoteVersion(ascend, unstable bool) ([]Version, error) {
 		return nil, err
 	}
 	// get all versions from versionURL
-	response, err := httpClient.Get(fmt.Sprintf("%s?mode=json&include=all", versionURL))
+	response, err := httpClient.Get(versionURL)
 	if err != nil {
 		return nil, err
 	}

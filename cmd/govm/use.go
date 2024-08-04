@@ -65,23 +65,33 @@ func RunUse(v string) error {
 	}
 
 	// create profile
-	profileName, err := govm.GetProfile()
-	if err != nil {
-		return err
-	}
-	profile, err := govm.OpenFile(profileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer profile.Close()
-	content, err := govm.GetProfileContent()
-	if err != nil {
-		return err
-	}
-	_, err = profile.WriteString(content)
+	_, err = useProfile()
 	if err != nil {
 		return err
 	}
 	govm.Tipf("Use %s now", version)
 	return nil
+}
+
+// useProfile refresh profile script and returns its path.
+func useProfile() (string, error) {
+	// create profile
+	profileName, err := govm.GetProfile()
+	if err != nil {
+		return "", err
+	}
+	profile, err := govm.OpenFile(profileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return "", err
+	}
+	defer profile.Close()
+	content, err := govm.GetProfileContent()
+	if err != nil {
+		return "", err
+	}
+	_, err = profile.WriteString(content)
+	if err != nil {
+		return "", err
+	}
+	return profileName, nil
 }

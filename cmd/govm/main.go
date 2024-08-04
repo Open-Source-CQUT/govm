@@ -31,6 +31,7 @@ func init() {
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(currentCmd)
 	rootCmd.AddCommand(cleanCmd)
+	rootCmd.AddCommand(profileCmd)
 }
 
 func main() {

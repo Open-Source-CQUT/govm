@@ -222,6 +222,6 @@ func GetProfileContent() (string, error) {
 	}
 
 	tmpl := `export GOROOT="%s"
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin`
+export PATH=$PATH:$GOROOT/bin`
 	return fmt.Sprintf(tmpl, filepath.Join(rootSymLink, "go")), err
 }

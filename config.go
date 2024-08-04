@@ -2,12 +2,14 @@ package govm
 
 import (
 	"fmt"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/pelletier/go-toml/v2"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -18,13 +20,13 @@ const (
 
 type Config struct {
 	// where to query Go versions, default https://go.dev/dl/?mode=json&include=all
-	ListAPI string `toml:"listapi,commented"`
+	ListAPI string `toml:"listapi" mapstructure:"listapi" comment:"where to query Go versions, default https://go.dev/dl/?mode=json&include=all"`
 	// download URL for Go release archive, default https://dl.google.com/go/
-	Mirror string `toml:"mirror,commented"`
+	Mirror string `toml:"mirror" mapstructure:"mirror" comment:"where to download Go release archive, default https://dl.google.com/go/"`
 	// proxy for HTTP requests, default use system proxy
-	Proxy string `toml:"proxy,commented"`
+	Proxy string `toml:"proxy" mapstructure:"proxy" comment:"http proxy, default use system proxy"`
 	// where to install Go, windows: $HOME/AppData/Local/govm/root/ other: /user/local/govm
-	Install string `toml:"install,commented"`
+	Install string `toml:"install" mapstructure:"install" comment:"where to install Go, for windows: $HOME/AppData/Local/govm/, for other: /usr/local/govm"`
 
 	dir string
 }
@@ -43,22 +45,14 @@ func GetConfigDir() (string, error) {
 	return configDir, nil
 }
 
-func OpenConfigFile() (*os.File, error) {
+// ReadConfig read config from config file.
+func ReadConfig() (*Config, error) {
 	configDir, err := GetConfigDir()
 	if err != nil {
 		return nil, err
 	}
 	// located at $HOME/.govm
 	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		return nil, err
-	}
-	return cfgFile, nil
-}
-
-// ReadConfig read config from config file.
-func ReadConfig() (*Config, error) {
-	cfgFile, err := OpenConfigFile()
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +69,38 @@ func ReadConfig() (*Config, error) {
 
 // WriteConfig write config into config file.
 func WriteConfig(cfg *Config) error {
-	cfgFile, err := OpenConfigFile()
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	// located at $HOME/.govm
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
 	defer cfgFile.Close()
 	return toml.NewEncoder(cfgFile).Encode(cfg)
+}
+
+// DefaultConfig returns default config, only for config showing.
+func DefaultConfig() (*Config, error) {
+	config, err := ReadConfig()
+	if err != nil {
+		return nil, err
+	}
+	if config.ListAPI == "" {
+		config.ListAPI = _GoDLVersionURL
+	}
+	if config.Mirror == "" {
+		config.Mirror = _GoogleMirror
+	}
+	if config.Proxy == "" {
+		config.Proxy = "(system proxy)"
+	}
+	if config.Install == "" {
+		config.Install, _ = DefaultInstallation()
+	}
+	return config, nil
 }
 
 const (
@@ -174,6 +194,10 @@ func GetInstallation() (string, error) {
 
 	// windows: $HOME/AppData/Local/govm-store
 	// linux, macOS, bsd and others: /usr/local/govm-store
+	return DefaultInstallation()
+}
+
+func DefaultInstallation() (string, error) {
 	if runtime.GOOS == "windows" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -181,7 +205,7 @@ func GetInstallation() (string, error) {
 		}
 		return filepath.Join(homeDir, "/AppData/Local/govm"), nil
 	}
-	return _DefaultLinuxInstallation, err
+	return _DefaultLinuxInstallation, nil
 }
 
 const _Profile = "profile"
@@ -280,4 +304,29 @@ func GetCacheDir() (string, error) {
 		return "", err
 	}
 	return filepath.Join(installation, _DefaultCache), err
+}
+
+// Pair key=value pair format.
+type Pair struct {
+	Key, Value string
+}
+
+func ParsePair(a string) (Pair, error) {
+	parts := strings.SplitN(a, "=", 2)
+	if len(parts) != 2 {
+		return Pair{}, errorx.Errorf("invalid key=value pair: %s", a)
+	}
+	return Pair{Key: parts[0], Value: parts[1]}, nil
+}
+
+func ParsePairList(args []string) ([]Pair, error) {
+	pairs := make([]Pair, 0, len(args))
+	for _, arg := range args {
+		pair, err := ParsePair(arg)
+		if err != nil {
+			return nil, err
+		}
+		pairs = append(pairs, pair)
+	}
+	return pairs, nil
 }

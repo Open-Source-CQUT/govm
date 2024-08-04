@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Open-Source-CQUT/govm"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"os"
@@ -32,6 +33,7 @@ func init() {
 	rootCmd.AddCommand(currentCmd)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(profileCmd)
+	rootCmd.AddCommand(configCmd)
 }
 
 func main() {
@@ -40,7 +42,16 @@ func main() {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 		}
 	}()
-	err := rootCmd.Execute()
+
+	// warmup
+	err := warmup()
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
+
+	// execute command
+	err = rootCmd.Execute()
 	if err != nil {
 		var kindError errorx.KindError
 		if errors.As(err, &kindError) {
@@ -52,4 +63,12 @@ func main() {
 		}
 		_, _ = fmt.Fprintln(os.Stderr, err.Error())
 	}
+}
+
+func warmup() error {
+	config, err := govm.ReadConfig()
+	if err != nil {
+		return err
+	}
+	return govm.WriteConfig(config)
 }

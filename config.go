@@ -23,9 +23,7 @@ type Config struct {
 	Mirror string `toml:"mirror,commented"`
 	// proxy for HTTP requests, default use system proxy
 	Proxy string `toml:"proxy,commented"`
-	// where to cache downloaded archives, default $HOME/.govm/cache/
-	Cache string `toml:"cache,commented"`
-	// where to install Go, windows: $HOME/AppData/Local/govm-store/root/
+	// where to install Go, windows: $HOME/AppData/Local/govm/root/ other: /user/local/govm
 	Install string `toml:"install,commented"`
 
 	dir string
@@ -128,25 +126,6 @@ func GetMirror() (string, error) {
 	return _GoogleMirror, nil
 }
 
-const (
-	_EnvCacheKey  = "GOVM_CACHE"
-	_DefaultCache = "cache"
-)
-
-func GetCacheDir() (string, error) {
-	envCache, found := os.LookupEnv(_EnvCacheKey)
-	if found {
-		return envCache, nil
-	}
-	config, err := ReadConfig()
-	if err != nil {
-		return "", err
-	} else if config.Cache != "" {
-		return config.Cache, nil
-	}
-	return filepath.Join(config.dir, _DefaultCache), err
-}
-
 func GetHttpClient() (*http.Client, error) {
 	var (
 		err    error
@@ -177,7 +156,7 @@ func GetHttpClient() (*http.Client, error) {
 const (
 	_EnvInstallKey = "GOVM_INSTALL"
 	// linux, macos, bsd
-	_DefaultLinuxInstallation = "/usr/local/govm-store"
+	_DefaultLinuxInstallation = "/usr/local/govm"
 )
 
 func GetInstallation() (string, error) {
@@ -224,4 +203,81 @@ func GetProfileContent() (string, error) {
 	tmpl := `export GOROOT="%s"
 export PATH=$PATH:$GOROOT/bin`
 	return fmt.Sprintf(tmpl, filepath.Join(rootSymLink, "go")), err
+}
+
+const (
+	storeFile = "store.toml"
+)
+
+type Store struct {
+	Use  string             `toml:"use"`
+	Root map[string]Version `toml:"root"`
+}
+
+func ReadStore() (*Store, error) {
+	store, err := GetInstallation()
+	if err != nil {
+		return nil, err
+	}
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return nil, err
+	}
+	defer storeFile.Close()
+	var storeData Store
+	err = toml.NewDecoder(storeFile).Decode(&storeData)
+	if err != nil {
+		return nil, err
+	}
+
+	// initialize
+	if storeData.Root == nil {
+		storeData.Root = make(map[string]Version)
+	}
+	return &storeData, nil
+}
+
+func WriteStore(storeData *Store) error {
+	store, err := GetInstallation()
+	if err != nil {
+		return err
+	}
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer storeFile.Close()
+	return toml.NewEncoder(storeFile).Encode(storeData)
+}
+
+const _RootDir = "root"
+
+func GetRootSymLink() (string, error) {
+	cfg, err := GetConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(cfg, _RootDir), nil
+}
+
+const _StoreDir = "store"
+
+func GetStoreDir() (string, error) {
+	installation, err := GetInstallation()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(installation, _StoreDir), nil
+}
+
+const (
+	_DefaultCache = "cache"
+)
+
+func GetCacheDir() (string, error) {
+	installation, err := GetInstallation()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(installation, _DefaultCache), err
 }

@@ -2,7 +2,6 @@ package govm
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/mholt/archiver/v4"
@@ -91,17 +90,4 @@ func extractHandler(target string) archiver.FileHandler {
 		}
 		return nil
 	}
-}
-
-// CheckSha256 check sha256 of file and compare with given sum.
-func CheckSha256(reader io.Reader, sum string) error {
-	hash := sha256.New()
-	_, err := io.CopyBuffer(hash, reader, _Buffer)
-	if err != nil {
-		return err
-	}
-	if Bytes2string(hash.Sum(nil)) != sum {
-		return errorx.Error("sha256 hash check failed")
-	}
-	return nil
 }

@@ -45,8 +45,8 @@ func RunUninstall(v string) error {
 	if err != nil {
 		return err
 	}
-	removedPath := storeData.Root[version].Path
-	delete(storeData.Root, version)
+	removedPath := storeData.Versions[version].Path
+	delete(storeData.Versions, version)
 	err = govm.WriteStore(storeData)
 	if err != nil {
 		return err

@@ -65,10 +65,34 @@ func main() {
 	}
 }
 
+// warmup config
 func warmup() error {
+	// warmup config
 	config, err := govm.ReadConfig()
 	if err != nil {
 		return err
 	}
-	return govm.WriteConfig(config)
+	err = govm.WriteConfig(config)
+	if err != nil {
+		return err
+	}
+
+	// warmup profile
+	profilename, err := govm.GetProfile()
+	if err != nil {
+		return err
+	}
+	profile, err := govm.OpenFile(profilename, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	profile.Close()
+
+	store, err := govm.ReadStore()
+	err = govm.WriteStore(store)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

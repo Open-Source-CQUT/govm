@@ -54,7 +54,7 @@ func RunClean() error {
 	var redundantCount int
 	for _, entry := range dirEntries {
 		// it is a redundant version if not in store
-		if _, ok := storeData.Root[entry.Name()]; !ok {
+		if _, ok := storeData.Versions[entry.Name()]; !ok {
 			err := os.RemoveAll(filepath.Join(storeDir, entry.Name()))
 			if err != nil {
 				return err

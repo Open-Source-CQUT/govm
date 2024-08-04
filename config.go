@@ -234,8 +234,8 @@ const (
 )
 
 type Store struct {
-	Use  string             `toml:"use"`
-	Root map[string]Version `toml:"root"`
+	Use      string             `toml:"use" comment:"the using version"`
+	Versions map[string]Version `toml:"store"`
 }
 
 func ReadStore() (*Store, error) {
@@ -255,8 +255,8 @@ func ReadStore() (*Store, error) {
 	}
 
 	// initialize
-	if storeData.Root == nil {
-		storeData.Root = make(map[string]Version)
+	if storeData.Versions == nil {
+		storeData.Versions = make(map[string]Version)
 	}
 	return &storeData, nil
 }

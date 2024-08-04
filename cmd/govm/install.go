@@ -110,7 +110,7 @@ func RunInstall(v string) error {
 		return err
 	}
 	downloadVersion.Path = storePath
-	storeData.Root[downloadVersion.Version] = downloadVersion
+	storeData.Versions[downloadVersion.Version] = downloadVersion
 	err = govm.WriteStore(storeData)
 	if err != nil {
 		return err

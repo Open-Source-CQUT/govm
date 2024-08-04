@@ -105,7 +105,7 @@ func GetLocalVersions(ascend bool) ([]Version, error) {
 		return nil, err
 	}
 	var localList []Version
-	for _, v := range storeData.Root {
+	for _, v := range storeData.Versions {
 		if storeData.Use == v.Version {
 			v.Using = true
 		}

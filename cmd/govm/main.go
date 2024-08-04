@@ -34,6 +34,11 @@ func init() {
 }
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 	err := rootCmd.Execute()
 	if err != nil {
 		var kindError errorx.KindError

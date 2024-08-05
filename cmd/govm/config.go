@@ -19,7 +19,7 @@ var (
 var configCmd = &cobra.Command{
 	Use:     "config",
 	Aliases: []string{"cfg"},
-	Short:   "manage Go version configuration",
+	Short:   "manage govm configs",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if write {
 			return WriteConfig(args)

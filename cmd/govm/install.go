@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 )
 
 var (
@@ -64,18 +63,16 @@ func RunInstall(v string, use bool) error {
 			}
 		}
 	} else {
-		filterVersions, err := Filter(remoteVersions, version, -1)
-		if err != nil {
-			return err
+		// find the specified version
+		for _, remoteVersion := range remoteVersions {
+			if remoteVersion.Version == version {
+				downloadVersion = remoteVersion
+				break
+			}
 		}
-		if len(filterVersions) == 0 {
+		if downloadVersion.Filename == "" {
 			return errorx.Warnf("no matching version found for %s", version)
 		}
-		// find the latest from the matched versions
-		// such as go1.22 -> go1.22.latest
-		downloadVersion = slices.MaxFunc(filterVersions, func(v1, v2 govm.Version) int {
-			return govm.CompareVersion(v1.Version, v2.Version)
-		})
 	}
 
 	// check if is already installed

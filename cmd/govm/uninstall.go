@@ -48,7 +48,7 @@ func RunUninstall(v string) error {
 	if err := os.RemoveAll(foundV.Path); err != nil {
 		return err
 	}
-	govm.Tipf("%s uninstalled", v)
+	govm.Tipf("Version %s uninstalled", v)
 
 	return nil
 }

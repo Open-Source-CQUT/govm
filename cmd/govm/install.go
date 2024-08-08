@@ -16,7 +16,9 @@ import (
 	"slices"
 )
 
-var use bool
+var (
+	use bool
+)
 
 var installCmd = &cobra.Command{
 	Use:     "install",
@@ -72,7 +74,7 @@ func RunInstall(v string, use bool) error {
 		// find the latest from the matched versions
 		// such as go1.22 -> go1.22.latest
 		downloadVersion = slices.MaxFunc(filterVersions, func(v1, v2 govm.Version) int {
-			return -govm.CompareVersion(v1.Version, v2.Version)
+			return govm.CompareVersion(v1.Version, v2.Version)
 		})
 	}
 
@@ -107,7 +109,6 @@ func RunInstall(v string, use bool) error {
 		return err
 	}
 	storePath := filepath.Join(store, downloadVersion.Version)
-
 	_ = os.MkdirAll(storePath, 0755)
 
 	// extract
@@ -119,6 +120,12 @@ func RunInstall(v string, use bool) error {
 	// store meta info
 	downloadVersion.Path = storePath
 	err = govm.AppendVersion(downloadVersion)
+	if err != nil {
+		return err
+	}
+	_ = archiveFile.Close()
+	govm.Tipf("Remove archive from cache")
+	err = os.RemoveAll(archiveFile.Name())
 	if err != nil {
 		return err
 	}
@@ -144,6 +151,7 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 		return nil, err
 	}
 	cacheFilename := filepath.Join(cacheDir, filename)
+	// find in cache
 	_, err = os.Stat(cacheFilename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
@@ -155,7 +163,6 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 	// find version from remote
 	govm.Tipf("Fetch %s from %s", version.Version, downloadURL)
 
-	// not in cache, download from remote
 	client, err := govm.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -188,10 +195,12 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 		return cacheFile, err
 	}
 
-	h64 := make([]byte, 64)
-	hex.Encode(h64, hash.Sum(nil))
-	if !bytes.Equal(h64, govm.String2bytes(version.Sha256)) {
-		return cacheFile, errorx.Error("sha256 hash check failed")
+	if version.Sha256 != "" {
+		h64 := make([]byte, 64)
+		hex.Encode(h64, hash.Sum(nil))
+		if !bytes.Equal(h64, govm.String2bytes(version.Sha256)) {
+			return cacheFile, errorx.Error("sha256 hash check failed")
+		}
 	}
 
 	// seek to start

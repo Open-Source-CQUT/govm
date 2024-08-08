@@ -35,6 +35,6 @@ func RunProfile() (string, error) {
 		return "", errorx.Errorf("using version %s not exist", use)
 	}
 	tmpl := `export GOROOT="%s"
-export PATH=$PATH:$GOROOT/bin`
+export PATH=$PATH:“$GOROOT/bin”`
 	return fmt.Sprintf(tmpl, filepath.Join(version.Path, "go")), nil
 }

@@ -1,66 +1,61 @@
-[English](README.en.md)|**简体中文**
+**English**|[简体中文](README.md)
 
 # govm
 
-govm是一个用于管理本地go版本的命令行工具，可以让你更简单和快速地切换不同的go版本，将更多注意力放在开发工作上。它是我结合平时使用习惯和借鉴了其他同类的开源工具而编写出来的一个小工具，由于它是纯go编写，对于主流的windows，linux，macos都能良好支持。
+[![Go Reference](https://pkg.go.dev/badge/github.com/Open-Source-CQUT/govm.svg)](https://pkg.go.dev/github.com/Open-Source-CQUT/govm)
+![Static Badge](https://img.shields.io/badge/go-1.22.5-blue)
 
+govm is a command line tool for managing local go versions, which allows you to switch between different go versions more easily and quickly, and focus more on development work. It is a small tool that I wrote based on my usual usage habits and other similar open source tools. Since it is written in pure go, it can support mainstream windows, linux, and macos well.
 
+## Installation
 
-## 安装
+### Download
 
-
-
-### 下载
-
-如果你拥有go环境，并且版本大于go1.16，可以采用go install来安装
+If you have a go environment and the version is greater than go1.16, you can use go install to install
 
 ```bash
 $ go install github.com/Open-Source-CQUT/govm/cmd/govm@latest
 ```
 
-或者可以在[Release](https://github.com/Open-Source-CQUT/govm/releases)中下载对应平台的最新版二进制文件，目前仅提供windows，macos，linux三个平台的发行版。
-
-
+Or you can download the latest version of the binary file for the corresponding platform in [Release](https://github.com/Open-Source-CQUT/govm/releases). Currently, only releases for windows, macos, and linux are provided.
 
 ### linux
 
-将govm文件安装到`/var/lib/govm`目录下，再链接至`/usr/local/bin`
+Install the govm file to the `/var/lib/govm` directory, and then link it to `/usr/local/bin`
 
 ```bash
 $ ln -s /var/lib/govm/govm /usr/local/bin/govm
 ```
 
-查看govm是否可用
+Check if govm is available
 
 ```bash
 $ govm version
 govm versoin v1.0.0 linux/amd64
 ```
 
-使用install命令下载最新版
+Use the install command to download the latest version
 
 ```bash
 $ sudo govm install --use
 ```
 
-在linux下设置环境变量
+Set environment variables in linux
 
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.bash_profile && source $HOME/.bash_profile 
+$ echo 'eval "$(govm profile)"' >> $HOME/.bash_profile && source $HOME/.bash_profile
 ```
 
-测试go是否可用
+Test if go is available
 
 ```bash
 $ go version
 go version go1.22.5 linux/amd64
 ```
 
-
-
 ### windows
 
-将`govm.exe`的位置添加到PATH系统变量中，然后确认govm是否可用
+Add the location of `govm.exe` to the PATH system variable, and then confirm whether govm is available
 
 ```bash
 $ govm version
@@ -75,126 +70,115 @@ $ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
 
 **powershell**
 
-设置环境变量，需新开powershell生效
+Set environment variables, need to open a new powershell to take effect
 
 ```powershell
 PS > setx PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
 ```
 
-测试go是否可用
+Test whether go is available
 
 ```bash
 $ go version
 go version go1.22.5 windows/amd64
 ```
 
-
-
 ### macos
 
-将govm二进制文件安装到`/var/lib/govm`目录下，再链接至`/usr/local/bin`目录下
+Install the govm binary file to the `/var/lib/govm` directory, and then link it to the `/usr/local/bin` directory
 
 ```bash
 $ ln -s /var/lib/govm/govm /usr/local/bin/govm
 ```
 
-查看govm是否可用
+Check if govm is available
 
 ```bash
 $ govm version
 govm versoin v1.0.0 darwin/amd64
 ```
 
-使用install命令下载最新版
+Use the install command to download the latest version
 
 ```bash
 $ sudo govm install --use
 ```
 
-在macos下设置环境变量
+Set environment variables under macos
 
 ```bash
 $ echo 'eval "$(govm profile)"' >> $HOME/.zsh && source $HOME/.zsh
 ```
 
-测试go是否可用
+Test if go is available
 
 ```bash
 $ go version
 go version go1.22.5 darwin/amd64
 ```
 
+### Other platforms
 
+If you are a user of other platforms, go to [Go supported platforms](https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1727) to check whether your platform is supported, and then follow the steps below to compile.
 
-### 其他平台
-
-如果你是其他平台的用户，前往[Go supported platforms](https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1727)查阅是否支持你的平台，然后按照下面的步骤编译。
-
-首先将源代码克隆到本地
+First clone the source code to your local
 
 ```bash
 $ git clone https://github.com/Open-Source-CQUT/govm.git
 ```
 
-切换到特定版本
+Switch to a specific version
 
 ```bash
 $ git checkout tags/v1.0.0
 ```
 
-确保你本地安装了go编译器和make，然后并将你的os和arch作为参数执行，示例如下
+Make sure you have the go compiler and make installed locally, and then execute your os and arch as parameters, as shown below
 
 ```bash
 $ make build mode=release os=linux arch=amd64
 ```
 
-编译完成后会在当前项目的`bin/release/`目录下生成编译好的二进制文件，执行如下命令查看是否正常运行，出现如下输出表示编译成功。
+After the compilation is completed, the compiled binary file will be generated in the `bin/release/` directory of the current project. Execute the following command to check whether it runs normally. The following output indicates that the compilation is successful.
 
-```bash
-$ ./govm version
-govm version untag linux/amd64
-```
+```bash $ ./govm version govm version untag linux/amd64 ```
 
-
-
-## 命令
+## Commands
 
 ```bash
 $ govm -h
 govm is a tool to manage local Go versions
 
 Usage:
-  govm [command]
+govm [command]
 
 Available Commands:
-  clean       Clean local cache and redundant versions
-  completion  Generate the autocompletion script for the specified shell
-  config      Manage govm configs
-  current     Show current using Go version
-  help        Help about any command
-  install     Install specified Go version
-  list        List local installed Go versions
-  profile     Show profile env
-  search      Search available go versions from remote
-  uninstall   Uninstall specified Go version
-  use         Use specified Go version
-  version     Show govm version
+clean Clean local cache and redundant versions
+completion Generate the autocompletion script for the specified shell
+config Manage govm configs
+current Show current using Go version
+help Help about any command
+install Install specified Go version
+list List local installed Go versions
+profile Show profile env
+search Search available go versions from remote
+uninstall Uninstall specified Go version
+use Use specified Go version
+version Show govm version
 
 Flags:
-  -h, --help   help for govm
+-h, --help help for govm
 
 Use "govm [command] --help" for more information about a command.
 ```
 
-govm总共由10个命令，大部分都很简单，下面简单演示下主要命令的使用。
-
-
+govm has a total of 10 commands, most of which are very simple. The following is a simple demonstration of the use of the main commands.
 
 ### search
 
-搜索可用的go版本，可以用正则进行匹配，默认从高到低按照版本进行排序显示前20条。
+Search for available go versions. You can use regular expressions to match. By default, the first 20 items are sorted from high to low by version.
 
-```bash
+```
 $ govm search
 go1.22.6  	   69 MB
 go1.22.5  	   69 MB
@@ -210,9 +194,9 @@ go1.21.11 	   67 MB
 go1.21.1  	   67 MB
 ```
 
-搜索特定的版本
+Search for a specific version 
 
-```bash
+```
 $ govm search 1.18 -n 10
 go1.18.10 	  142 MB
 go1.18.9  	  142 MB
@@ -226,49 +210,43 @@ go1.18.2  	  142 MB
 go1.18.1  	  142 MB
 ```
 
-
-
 ### install
 
-安装指定的go版本，不指定任何参数时则安装最新版本
+Install the specified go version. If no parameters are specified, the latest version will be installed
 
 ```bash
 $ govm install
 Fetch go1.22.6 from https://dl.google.com/go/go1.22.6.windows-amd64.zip
-Downloading go1.22.6.windows-amd64.zip 100% |████████████████████████████████████████| (76/76 MB, 34 MB/s) [2s]
+Downloading go1.22.6.windows-amd64.zip 100% |█████████████████████████████████████| (76/76 MB, 34 MB/s) [2s]
 Extract go1.22.6.windows-amd64.zip to local store
 Remove archive from cache
 Version go1.22.6 installed
 ```
 
-安装并设置为使用版本
+Install and set to use version
 
 ```bash
 $ sudo govm install 1.20.14
 Fetch go1.20.14 from https://dl.google.com/go/go1.20.14.windows-amd64.zip
-Downloading go1.20.14.windows-amd64.zip 100% |████████████████████████████████████████| (114/114 MB, 32 MB/s) [3s]
+Downloading go1.20.14.windows-amd64.zip 100% |████████████████████████████████████| (114/114 MB, 32 MB/s) [3s]
 Extract go1.20.14.windows-amd64.zip to local store
 Remove archive from cache
 Version go1.20.14 installed
 Use go1.20.14 now
 ```
 
-
-
 ### use
 
-将某一个已安装的版本设置为使用版本
+Set an installed version as the used version
 
 ```bash
 $ govm use 1.22.5
 Use go1.22.5 now
 ```
 
-
-
 ### list
 
-查看本地已安装的版本
+View the locally installed version
 
 ```bash
 $ govm list
@@ -279,28 +257,22 @@ go1.22.1
 go1.21rc2
 ```
 
-
-
 ### uninstall
 
-卸载某一个特定版本
+Uninstall a specific version
 
 ```bash
 $ sudo govm uninstall 1.22.5
 Version 1.22.5 uninstalled
 ```
 
+### More
 
+For more help information, please view it through `govm command help`
 
-### 更多
+## Configuration
 
-更多帮助信息请通过`govm command help`来查看
-
-
-
-## 配置
-
-govm的配置文件在所有系统中都存放在`$HOME/.govm/config.toml`中，通过如下命令可以查看配置
+The configuration file of govm is stored in `$HOME/.govm/config.toml` in all systems. You can view the configuration by the following command
 
 ```bash
 $ govm config
@@ -310,53 +282,45 @@ proxy=(system proxy)
 install=/home/username/.govm/store/
 ```
 
+### Mirror
 
+The default download mirror of govm is to use the go official website. Chinese users are recommended to use the latter two
 
-### 镜像
+- Google: https://dl.google.com/go/, default
+- Alibaba Cloud: https://mirrors.aliyun.com/golang/
+- Nanjing University: https://mirrors.nju.edu.cn/golang/
 
-govm的默认下载镜像是使用go官网，中国用户建议使用后两个
-
-- 谷歌：https://dl.google.com/go/，默认
-- 阿里云：https://mirrors.aliyun.com/golang/
-- 南京大学：https://mirrors.nju.edu.cn/golang/
-
-**中科大虽然也有go镜像，但是会报403，不推荐使用**。使用如下命令修改镜像
+**Although USTC also has a go mirror, it will report 403, so it is not recommended for CN users**. Use the following command to modify the mirror.
 
 ```bash
-$ govm cfg -w proxy=https://mirrors.aliyun.com/golang/
+$ govm cfg -w mirror=https://mirrors.aliyun.com/golang/
 ```
 
+### Version list
 
-
-### 版本列表
-
-默认的版本列表使用的是go官方提供的API
+The default version list uses the API provided by go officially
 
 ```
 https://go.dev/dl/?mode=json&include=all
 ```
 
-中国用户应该是比较难访问的，不过这是一个可配置项，按照如下命令修改
+It should be difficult for Chinese users to access, but this is a configurable item, modify it according to the following command
 
 ```bash
 $ govm cfg -w listapi=your_cdn
 ```
 
+### Proxy
 
-
-### 代理
-
-默认情况下使用系统代理 ，也可以手动指定代理，使用如下命令修改
+The system proxy is used by default, and you can also specify the proxy manually, modify it with the following command
 
 ```bash
 $ govm cfg -w proxy=your_proxy
 ```
 
+### Installation path
 
-
-### 安装路径
-
-默认存放位置位于`.govm/store/`目录下，使用如下命令修改
+The default storage location is in the `.govm/store/` directory, modify it with the following command
 
 ```bash
 $ govm cfg -w install=new_pos

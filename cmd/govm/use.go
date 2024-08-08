@@ -9,7 +9,7 @@ import (
 
 var useCmd = &cobra.Command{
 	Use:   "use",
-	Short: "use specified Go version",
+	Short: "Use specified Go version",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var version string
 		if len(args) > 0 {

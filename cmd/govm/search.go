@@ -23,7 +23,7 @@ const defaultLines = 20
 
 var searchCmd = &cobra.Command{
 	Use:   "search",
-	Short: "search available go versions from remote",
+	Short: "Search available go versions from remote",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var pattern string
 		if len(args) > 0 {

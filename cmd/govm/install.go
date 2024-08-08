@@ -20,7 +20,7 @@ var use bool
 
 var installCmd = &cobra.Command{
 	Use:     "install",
-	Short:   "install specified Go version",
+	Short:   "Install specified Go version",
 	Aliases: []string{"i"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var version string

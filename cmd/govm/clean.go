@@ -9,7 +9,7 @@ import (
 
 var cleanCmd = &cobra.Command{
 	Use:     "clean",
-	Short:   "clean local cache and redundant versions",
+	Short:   "Clean local cache and redundant versions",
 	Aliases: []string{"cl"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return RunClean()

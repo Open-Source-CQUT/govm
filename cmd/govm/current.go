@@ -9,7 +9,7 @@ import (
 
 var currentCmd = &cobra.Command{
 	Use:   "current",
-	Short: "show current using Go version",
+	Short: "Show current using Go version",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		current, err := RunCurrent()
 		if err != nil {

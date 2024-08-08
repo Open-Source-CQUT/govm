@@ -16,6 +16,8 @@ import (
 	"slices"
 )
 
+var use bool
+
 var installCmd = &cobra.Command{
 	Use:     "install",
 	Short:   "install specified Go version",
@@ -25,11 +27,15 @@ var installCmd = &cobra.Command{
 		if len(args) > 0 {
 			version = args[0]
 		}
-		return RunInstall(version)
+		return RunInstall(version, use)
 	},
 }
 
-func RunInstall(v string) error {
+func init() {
+	installCmd.Flags().BoolVar(&use, "use", false, "install then use")
+}
+
+func RunInstall(v string, use bool) error {
 	var version string
 	if v != "" {
 		cv, ok := govm.CheckVersion(v)
@@ -117,6 +123,10 @@ func RunInstall(v string) error {
 		return err
 	}
 	govm.Tipf("%s installed", downloadVersion.Version)
+	// whether to use
+	if use {
+		return RunUse(downloadVersion.Version)
+	}
 	return nil
 }
 

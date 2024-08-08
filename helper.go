@@ -5,6 +5,7 @@ import (
 	"github.com/Open-Source-CQUT/gover"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"unsafe"
@@ -64,4 +65,22 @@ func Tipf(format string, a ...any) {
 		}
 		fmt.Printf(format, a...)
 	}
+}
+
+// UserHomeDir returns the home directory for the current user.
+func UserHomeDir() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	if runtime.GOOS != "windows" {
+		// for sudo
+		sudoUser, exist := os.LookupEnv("SUDO_USER")
+		if exist {
+			return strings.ReplaceAll(homeDir, "root", sudoUser), nil
+		}
+	}
+
+	return homeDir, nil
 }

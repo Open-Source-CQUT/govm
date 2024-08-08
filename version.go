@@ -3,10 +3,58 @@ package govm
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pelletier/go-toml/v2"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 )
+
+const (
+	storeFile = "store.toml"
+)
+
+type Store struct {
+	Use      string             `toml:"use" comment:"the using version"`
+	Versions map[string]Version `toml:"store"`
+}
+
+func ReadStore() (*Store, error) {
+	store, err := GetConfigDir()
+	if err != nil {
+		return nil, err
+	}
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0755)
+	if err != nil {
+		return nil, err
+	}
+	defer storeFile.Close()
+	var storeData Store
+	err = toml.NewDecoder(storeFile).Decode(&storeData)
+	if err != nil {
+		return nil, err
+	}
+
+	// initialize
+	if storeData.Versions == nil {
+		storeData.Versions = make(map[string]Version)
+	}
+	return &storeData, nil
+}
+
+func WriteStore(storeData *Store) error {
+	store, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer storeFile.Close()
+	return toml.NewEncoder(storeFile).Encode(storeData)
+}
 
 type GoVersion struct {
 	Version string    `json:"version"`
@@ -23,8 +71,8 @@ type Version struct {
 	Size     uint64 `toml:"size" json:"size"`
 	Kind     string `toml:"kind" json:"kind"`
 	Path     string `toml:"path"`
-	Using    bool
-	Stable   bool
+	Using    bool   `toml:"-"`
+	Stable   bool   `toml:"-"`
 }
 
 // GetRemoteVersion returns all available go versions from versionURL without git.

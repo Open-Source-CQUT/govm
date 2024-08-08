@@ -25,16 +25,20 @@ type Config struct {
 	Mirror string `toml:"mirror" mapstructure:"mirror" comment:"where to download Go release archive, default https://dl.google.com/go/"`
 	// proxy for HTTP requests, default use system proxy
 	Proxy string `toml:"proxy" mapstructure:"proxy" comment:"http proxy, default use system proxy"`
-	// where to install Go, windows: $HOME/AppData/Local/govm/root/ other: /user/local/govm
-	Install string `toml:"install" mapstructure:"install" comment:"where to install Go, for windows: $HOME/AppData/Local/govm/, for other: /usr/local/govm"`
+	// where to store cache and package, windows: %USERPROFILE%/AppData/Local/govm/root/ other:  $HOME/.local/govm
+	Install string `toml:"install" mapstructure:"install" comment:"where to store cache and package, windows: %USERPROFILE%/AppData/Local/govm/root/ other: $HOME/.local/govm"`
 
-	dir string
+	dir string `toml:"-"`
 }
 
 func GetConfigDir() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := UserHomeDir()
 	if err != nil {
 		return "", err
+	}
+	sudoUser, e := os.LookupEnv("SUDO_USER")
+	if e {
+		homeDir = filepath.Join("/home", sudoUser)
 	}
 	// config dir
 	configDir := filepath.Join(homeDir, configDir)
@@ -48,7 +52,7 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0755)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0766)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +74,7 @@ func WriteConfig(cfg *Config) error {
 		return err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0766)
 	if err != nil {
 		return err
 	}
@@ -171,8 +175,6 @@ func GetHttpClient() (*http.Client, error) {
 
 const (
 	_EnvInstallKey = "GOVM_INSTALL"
-	// linux, macos, bsd
-	_DefaultLinuxInstallation = "/usr/local/govm"
 )
 
 func GetInstallation() (string, error) {
@@ -188,20 +190,20 @@ func GetInstallation() (string, error) {
 		return config.Install, nil
 	}
 
-	// windows: $HOME/AppData/Local/govm-store
-	// linux, macOS, bsd and others: /usr/local/govm-store
+	// windows: %USERPROFILE%/AppData/Local/govm-store
+	// linux, macOS, bsd and others: $HOME/.local/govm
 	return DefaultInstallation()
 }
 
 func DefaultInstallation() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
 	if runtime.GOOS == "windows" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
 		return filepath.Join(homeDir, "/AppData/Local/govm"), nil
 	}
-	return _DefaultLinuxInstallation, nil
+	return filepath.Join(homeDir, ".local/govm"), nil
 }
 
 const _Profile = "profile"
@@ -223,51 +225,6 @@ func GetProfileContent() (string, error) {
 	tmpl := `export GOROOT="%s"
 export PATH=$PATH:$GOROOT/bin`
 	return fmt.Sprintf(tmpl, filepath.Join(rootSymLink, "go")), err
-}
-
-const (
-	storeFile = "store.toml"
-)
-
-type Store struct {
-	Use      string             `toml:"use" comment:"the using version"`
-	Versions map[string]Version `toml:"store"`
-}
-
-func ReadStore() (*Store, error) {
-	store, err := GetInstallation()
-	if err != nil {
-		return nil, err
-	}
-	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0755)
-	if err != nil {
-		return nil, err
-	}
-	defer storeFile.Close()
-	var storeData Store
-	err = toml.NewDecoder(storeFile).Decode(&storeData)
-	if err != nil {
-		return nil, err
-	}
-
-	// initialize
-	if storeData.Versions == nil {
-		storeData.Versions = make(map[string]Version)
-	}
-	return &storeData, nil
-}
-
-func WriteStore(storeData *Store) error {
-	store, err := GetInstallation()
-	if err != nil {
-		return err
-	}
-	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
-	if err != nil {
-		return err
-	}
-	defer storeFile.Close()
-	return toml.NewEncoder(storeFile).Encode(storeData)
 }
 
 const _RootDir = "root"

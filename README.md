@@ -141,7 +141,9 @@ $ make build mode=release os=linux arch=amd64
 
 After the compilation is completed, the compiled binary file will be generated in the `bin/release/` directory of the current project. Execute the following command to check whether it runs normally. The following output indicates that the compilation is successful.
 
-```bash $ ./govm version govm version untag linux/amd64 ```
+```bash
+$ ./govm version govm version untag linux/amd64
+```
 
 ## Commands
 
@@ -150,24 +152,24 @@ $ govm -h
 govm is a tool to manage local Go versions
 
 Usage:
-govm [command]
+  govm [command]
 
 Available Commands:
-clean Clean local cache and redundant versions
-completion Generate the autocompletion script for the specified shell
-config Manage govm configs
-current Show current using Go version
-help Help about any command
-install Install specified Go version
-list List local installed Go versions
-profile Show profile env
-search Search available go versions from remote
-uninstall Uninstall specified Go version
-use Use specified Go version
-version Show govm version
+  clean       Clean local cache and redundant versions
+  completion  Generate the autocompletion script for the specified shell
+  config      Manage govm configs
+  current     Show current using Go version
+  help        Help about any command
+  install     Install specified Go version
+  list        List local installed Go versions
+  profile     Show profile env
+  search      Search available go versions from remote
+  uninstall   Uninstall specified Go version
+  use         Use specified Go version
+  version     Show govm version
 
 Flags:
--h, --help help for govm
+  -h, --help   help for govm
 
 Use "govm [command] --help" for more information about a command.
 ```
@@ -178,7 +180,7 @@ govm has a total of 10 commands, most of which are very simple. The following is
 
 Search for available go versions. You can use regular expressions to match. By default, the first 20 items are sorted from high to low by version.
 
-```
+```bash
 $ govm search
 go1.22.6  	   69 MB
 go1.22.5  	   69 MB
@@ -196,7 +198,7 @@ go1.21.1  	   67 MB
 
 Search for a specific version 
 
-```
+```bash
 $ govm search 1.18 -n 10
 go1.18.10 	  142 MB
 go1.18.9  	  142 MB
@@ -290,7 +292,7 @@ The default download mirror of govm is to use the go official website. Chinese u
 - Alibaba Cloud: https://mirrors.aliyun.com/golang/
 - Nanjing University: https://mirrors.nju.edu.cn/golang/
 
-**Although USTC also has a go mirror, it will report 403, so it is not recommended for CN users**. Use the following command to modify the mirror.
+Use the following command to modify the mirror.
 
 ```bash
 $ govm cfg -w mirror=https://mirrors.aliyun.com/golang/
@@ -304,7 +306,7 @@ The default version list uses the API provided by go officially
 https://go.dev/dl/?mode=json&include=all
 ```
 
-It should be difficult for Chinese users to access, but this is a configurable item, modify it according to the following command
+Modify it according to the following command
 
 ```bash
 $ govm cfg -w listapi=your_cdn

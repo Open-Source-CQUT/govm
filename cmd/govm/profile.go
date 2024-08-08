@@ -27,6 +27,9 @@ func RunProfile() (string, error) {
 		return "", err
 	}
 	use := store.Use
+	if store.Use == "" {
+		return "", errorx.Warn("no using version")
+	}
 	version, e := store.Versions[use]
 	if !e {
 		return "", errorx.Errorf("using version %s not exist", use)

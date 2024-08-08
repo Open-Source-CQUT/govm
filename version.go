@@ -176,12 +176,3 @@ func AppendVersion(v Version) error {
 	store.Versions[v.Version] = v
 	return WriteStore(store)
 }
-
-func DeleteVersion(v Version) error {
-	store, err := ReadStore()
-	if err != nil {
-		return err
-	}
-	delete(store.Versions, v.Version)
-	return WriteStore(store)
-}

@@ -40,10 +40,14 @@ func RunUninstall(v string) error {
 		return errorx.Warnf("%s not installed", v)
 	}
 
-	err = govm.DeleteVersion(foundV)
+	if store.Use == foundV.Version {
+		store.Use = ""
+	}
+	err = govm.WriteStore(store)
 	if err != nil {
 		return err
 	}
+
 	// remove from store
 	if err := os.RemoveAll(foundV.Path); err != nil {
 		return err

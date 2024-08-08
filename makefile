@@ -64,7 +64,7 @@ build:
 windows := 386 amd64 arm64 arm
 linux := 386 amd64 arm64 arm
 darwin := amd64 arm64
-platforms := windows, linux, darwin
+platforms := windows linux darwin
 
 .PHONY: build_all
 build_all:

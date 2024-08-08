@@ -71,14 +71,18 @@ func RunInstall(v string) error {
 	}
 
 	// check if is already installed
-	locals, err := govm.GetLocalVersions(false)
+	storeData, err := govm.ReadStore()
 	if err != nil {
 		return err
 	}
-	if slices.ContainsFunc(locals, func(v govm.Version) bool {
-		return v.Version == downloadVersion.Version
-	}) {
-		return errorx.Warnf("%s already installed", downloadVersion.Version)
+	foundV, exist := storeData.Versions[downloadVersion.Version]
+	if exist {
+		_, err := os.Stat(foundV.Path)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		} else if err == nil {
+			return errorx.Warnf("%s already installed", downloadVersion.Version)
+		}
 	}
 
 	// download the specified version
@@ -98,6 +102,8 @@ func RunInstall(v string) error {
 	}
 	storePath := filepath.Join(store, downloadVersion.Version)
 
+	_ = os.MkdirAll(storePath, 0755)
+
 	// extract
 	govm.Tipf("Extract %s to local store", filepath.Base(archiveFile.Name()))
 	if err = govm.Extract(archiveFile, storePath); err != nil {
@@ -105,13 +111,8 @@ func RunInstall(v string) error {
 	}
 
 	// store meta info
-	storeData, err := govm.ReadStore()
-	if err != nil {
-		return err
-	}
 	downloadVersion.Path = storePath
-	storeData.Versions[downloadVersion.Version] = downloadVersion
-	err = govm.WriteStore(storeData)
+	err = govm.AppendVersion(downloadVersion)
 	if err != nil {
 		return err
 	}
@@ -138,7 +139,7 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 		return nil, err
 	} else if err == nil { // found in cache
 		govm.Tipf("Found %s from cache", version.Version)
-		return govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0644)
+		return govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0755)
 	}
 
 	// find version from remote
@@ -159,7 +160,7 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 	if response.StatusCode != 200 {
 		return nil, errorx.Errorf("download failed: %s", response.Status)
 	}
-	cacheFile, err := govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0644)
+	cacheFile, err := govm.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		return nil, err
 	}

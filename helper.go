@@ -78,7 +78,7 @@ func UserHomeDir() (string, error) {
 		// for sudo
 		sudoUser, exist := os.LookupEnv("SUDO_USER")
 		if exist {
-			return strings.ReplaceAll(homeDir, "root", sudoUser), nil
+			return filepath.Join("/home", sudoUser), nil
 		}
 	}
 

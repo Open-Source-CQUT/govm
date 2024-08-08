@@ -4,7 +4,6 @@ import (
 	"github.com/Open-Source-CQUT/govm"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
-	"os"
 	"slices"
 )
 
@@ -50,17 +49,6 @@ func RunUse(v string) error {
 	}
 	storeData.Use = using.Version
 	if err := govm.WriteStore(storeData); err != nil {
-		return err
-	}
-
-	// update symlink
-	currentLink, err := govm.GetRootSymLink()
-	if err != nil {
-		return err
-	}
-	os.Remove(currentLink)
-	err = os.Symlink(using.Path, currentLink)
-	if err != nil {
 		return err
 	}
 

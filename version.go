@@ -167,3 +167,21 @@ func GetLocalVersions(ascend bool) ([]Version, error) {
 	})
 	return localList, nil
 }
+
+func AppendVersion(v Version) error {
+	store, err := ReadStore()
+	if err != nil {
+		return err
+	}
+	store.Versions[v.Version] = v
+	return WriteStore(store)
+}
+
+func DeleteVersion(v Version) error {
+	store, err := ReadStore()
+	if err != nil {
+		return err
+	}
+	delete(store.Versions, v.Version)
+	return WriteStore(store)
+}

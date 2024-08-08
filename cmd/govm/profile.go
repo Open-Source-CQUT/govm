@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/Open-Source-CQUT/govm"
+	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
 var profileCmd = &cobra.Command{
@@ -20,5 +22,16 @@ var profileCmd = &cobra.Command{
 }
 
 func RunProfile() (string, error) {
-	return govm.GetProfileContent()
+	store, err := govm.ReadStore()
+	if err != nil {
+		return "", err
+	}
+	use := store.Use
+	version, e := store.Versions[use]
+	if !e {
+		return "", errorx.Errorf("using version %s not exist", use)
+	}
+	tmpl := `export GOROOT="%s"
+export PATH=$PATH:$GOROOT/bin`
+	return fmt.Sprintf(tmpl, filepath.Join(version.Path, "go")), nil
 }

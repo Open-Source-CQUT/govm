@@ -5,7 +5,6 @@ import (
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"os"
-	"slices"
 )
 
 var uninstallCmd = &cobra.Command{
@@ -32,28 +31,21 @@ func RunUninstall(v string) error {
 		return errorx.Warnf("invliad version %s", v)
 	}
 
-	// check if is already installed
-	locals, err := govm.GetLocalVersions(false)
-	installed := slices.ContainsFunc(locals, func(v govm.Version) bool {
-		return v.Version == version
-	})
-	if !installed {
+	store, err := govm.ReadStore()
+	if err != nil {
+		return err
+	}
+	foundV, exist := store.Versions[version]
+	if !exist {
 		return errorx.Warnf("%s not installed", v)
 	}
 
-	storeData, err := govm.ReadStore()
+	err = govm.DeleteVersion(foundV)
 	if err != nil {
 		return err
 	}
-	removedPath := storeData.Versions[version].Path
-	delete(storeData.Versions, version)
-	err = govm.WriteStore(storeData)
-	if err != nil {
-		return err
-	}
-
 	// remove from store
-	if err := os.RemoveAll(removedPath); err != nil {
+	if err := os.RemoveAll(foundV.Path); err != nil {
 		return err
 	}
 	govm.Tipf("%s uninstalled", v)

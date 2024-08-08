@@ -1,14 +1,12 @@
 package govm
 
 import (
-	"fmt"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/pelletier/go-toml/v2"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -52,7 +50,7 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0766)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +72,7 @@ func WriteConfig(cfg *Config) error {
 		return err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0766)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
@@ -196,35 +194,7 @@ func GetInstallation() (string, error) {
 }
 
 func DefaultInstallation() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	if runtime.GOOS == "windows" {
-		return filepath.Join(homeDir, "/AppData/Local/govm"), nil
-	}
-	return filepath.Join(homeDir, ".local/govm"), nil
-}
-
-const _Profile = "profile"
-
-func GetProfile() (string, error) {
-	dir, err := GetConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(dir, _Profile), nil
-}
-
-func GetProfileContent() (string, error) {
-	rootSymLink, err := GetRootSymLink()
-	if err != nil {
-		return "", err
-	}
-
-	tmpl := `export GOROOT="%s"
-export PATH=$PATH:$GOROOT/bin`
-	return fmt.Sprintf(tmpl, filepath.Join(rootSymLink, "go")), err
+	return GetConfigDir()
 }
 
 const _RootDir = "root"

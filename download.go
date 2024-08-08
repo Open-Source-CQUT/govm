@@ -70,7 +70,7 @@ func extractHandler(target string) archiver.FileHandler {
 		targetPath := filepath.Join(target, f.NameInArchive)
 		// mkdir if it is dir
 		if f.IsDir() {
-			return os.MkdirAll(targetPath, f.Mode())
+			return os.MkdirAll(targetPath, 0755)
 		}
 		// copy to target if is a file
 		targetFile, err := OpenFile(targetPath, os.O_CREATE|os.O_RDWR, f.Mode())

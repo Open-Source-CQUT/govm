@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Version string
+	Version = "untag"
 )
 
 var rootCmd = &cobra.Command{

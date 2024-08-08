@@ -122,7 +122,7 @@ func RunInstall(v string, use bool) error {
 	if err != nil {
 		return err
 	}
-	govm.Tipf("%s installed", downloadVersion.Version)
+	govm.Tipf("Version %s installed", downloadVersion.Version)
 	// whether to use
 	if use {
 		return RunUse(downloadVersion.Version)
@@ -153,7 +153,7 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 	}
 
 	// find version from remote
-	govm.Tipf("Found %s from %s", version.Version, downloadURL)
+	govm.Tipf("Fetch %s from %s", version.Version, downloadURL)
 
 	// not in cache, download from remote
 	client, err := govm.GetHttpClient()

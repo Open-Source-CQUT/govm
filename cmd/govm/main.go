@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/Open-Source-CQUT/govm"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"os"
@@ -18,12 +17,12 @@ var rootCmd = &cobra.Command{
 	Use:           "govm",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Version:       Version,
 	Short:         "govm is a tool to manage local Go versions",
 }
 
 func init() {
 	rootCmd.SetVersionTemplate(fmt.Sprintf("govm version {{.Version}} %s", runtime.GOOS+"/"+runtime.GOARCH))
+	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(installCmd)
@@ -42,15 +41,8 @@ func main() {
 		}
 	}()
 
-	// warmup
-	err := warmup()
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err.Error())
-		return
-	}
-
 	// execute command
-	err = rootCmd.Execute()
+	err := rootCmd.Execute()
 	if err != nil {
 		var kindError errorx.KindError
 		if errors.As(err, &kindError) {
@@ -62,36 +54,4 @@ func main() {
 		}
 		_, _ = fmt.Fprintln(os.Stderr, err.Error())
 	}
-}
-
-// warmup config
-func warmup() error {
-	// warmup config
-	config, err := govm.ReadConfig()
-	if err != nil {
-		return err
-	}
-	err = govm.WriteConfig(config)
-	if err != nil {
-		return err
-	}
-
-	// warmup profile
-	profilename, err := govm.GetProfile()
-	if err != nil {
-		return err
-	}
-	profile, err := govm.OpenFile(profilename, os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		return err
-	}
-	profile.Close()
-
-	store, err := govm.ReadStore()
-	err = govm.WriteStore(store)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

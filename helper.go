@@ -47,7 +47,7 @@ func CheckVersion(v string) (string, bool) {
 func OpenFile(filename string, flag int, perm os.FileMode) (*os.File, error) {
 	dir := filepath.Dir(filename)
 	if len(dir) == 1 && dir != "." && !os.IsPathSeparator(dir[0]) || len(dir) > 1 {
-		err := os.MkdirAll(dir, 0755)
+		err := os.MkdirAll(dir, perm)
 		if err != nil {
 			return nil, err
 		}

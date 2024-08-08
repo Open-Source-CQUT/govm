@@ -38,10 +38,6 @@ func GetConfigDir() (string, error) {
 	}
 	// config dir
 	configDir := filepath.Join(homeDir, configDir)
-	err = os.MkdirAll(configDir, 0644)
-	if err != nil {
-		return "", err
-	}
 	return configDir, nil
 }
 
@@ -52,7 +48,7 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0644)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +70,7 @@ func WriteConfig(cfg *Config) error {
 		return err
 	}
 	// located at $HOME/.govm
-	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	cfgFile, err := OpenFile(filepath.Join(configDir, configFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
@@ -243,7 +239,7 @@ func ReadStore() (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0644)
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +262,7 @@ func WriteStore(storeData *Store) error {
 	if err != nil {
 		return err
 	}
-	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	storeFile, err := OpenFile(filepath.Join(store, storeFile), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}

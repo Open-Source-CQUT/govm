@@ -25,6 +25,8 @@ type Config struct {
 	Proxy string `toml:"proxy" mapstructure:"proxy" comment:"http proxy, default use system proxy"`
 	// where to store cache and package, windows: %USERPROFILE%/AppData/Local/govm/root/ other:  $HOME/.local/govm
 	Install string `toml:"install" mapstructure:"install" comment:"where to store cache and package, windows: %USERPROFILE%/AppData/Local/govm/root/ other: $HOME/.local/govm"`
+	// using version
+	Use string `toml:"use" mapstructure:"use" comment:"using version"`
 
 	dir string `toml:"-"`
 }
@@ -197,14 +199,12 @@ func DefaultInstallation() (string, error) {
 	return GetConfigDir()
 }
 
-const _RootDir = "root"
-
-func GetRootSymLink() (string, error) {
-	cfg, err := GetConfigDir()
+func GetUsingVersion() (string, error) {
+	config, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cfg, _RootDir), nil
+	return config.Use, nil
 }
 
 const _StoreDir = "store"

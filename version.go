@@ -16,12 +16,11 @@ const (
 )
 
 type Store struct {
-	Use      string             `toml:"use" comment:"the using version"`
 	Versions map[string]Version `toml:"store"`
 }
 
 func ReadStore() (*Store, error) {
-	store, err := GetConfigDir()
+	store, err := GetInstallation()
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,7 @@ func ReadStore() (*Store, error) {
 }
 
 func WriteStore(storeData *Store) error {
-	store, err := GetConfigDir()
+	store, err := GetInstallation()
 	if err != nil {
 		return err
 	}
@@ -152,9 +151,13 @@ func GetLocalVersions(ascend bool) ([]Version, error) {
 	if err != nil {
 		return nil, err
 	}
+	usingVersion, err := GetUsingVersion()
+	if err != nil {
+		return nil, err
+	}
 	var localList []Version
 	for _, v := range storeData.Versions {
-		if storeData.Use == v.Version {
+		if usingVersion == v.Version {
 			v.Using = true
 		}
 		localList = append(localList, v)

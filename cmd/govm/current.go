@@ -21,12 +21,11 @@ var currentCmd = &cobra.Command{
 }
 
 func RunCurrent() (string, error) {
-	store, err := govm.ReadStore()
+	usingVersion, err := govm.GetUsingVersion()
 	if err != nil {
 		return "", err
-	}
-	if store.Use == "" {
+	} else if usingVersion == "" {
 		return "", errorx.Warn("no using version")
 	}
-	return store.Use, nil
+	return usingVersion, nil
 }

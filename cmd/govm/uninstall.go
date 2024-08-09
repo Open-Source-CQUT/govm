@@ -39,16 +39,25 @@ func RunUninstall(v string) error {
 	if !exist {
 		return errorx.Warnf("%s not installed", v)
 	}
-
-	if store.Use == foundV.Version {
-		store.Use = ""
-	}
 	err = govm.WriteStore(store)
 	if err != nil {
 		return err
 	}
 
-	// remove from store
+	// unset using version
+	config, err := govm.ReadConfig()
+	if err != nil {
+		return err
+	}
+	if config.Use == foundV.Version {
+		config.Use = ""
+		err := govm.WriteConfig(config)
+		if err != nil {
+			return err
+		}
+	}
+
+	// remove from local
 	if err := os.RemoveAll(foundV.Path); err != nil {
 		return err
 	}

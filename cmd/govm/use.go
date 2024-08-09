@@ -43,12 +43,12 @@ func RunUse(v string) error {
 	using := localList[i]
 
 	// update store.toml
-	storeData, err := govm.ReadStore()
+	config, err := govm.ReadConfig()
 	if err != nil {
 		return err
 	}
-	storeData.Use = using.Version
-	if err := govm.WriteStore(storeData); err != nil {
+	config.Use = using.Version
+	if err := govm.WriteConfig(config); err != nil {
 		return err
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
 	"path/filepath"
+	"runtime"
 )
 
 var profileCmd = &cobra.Command{
@@ -26,15 +27,20 @@ func RunProfile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	use := store.Use
-	if store.Use == "" {
-		return "", errorx.Warn("no using version")
+	using, err := govm.GetUsingVersion()
+	if err != nil {
+		return "", err
 	}
-	version, e := store.Versions[use]
+	version, e := store.Versions[using]
 	if !e {
-		return "", errorx.Errorf("using version %s not exist", use)
+		return "", errorx.Errorf("using version %s not exist", using)
 	}
 	tmpl := `export GOROOT="%s"
-export PATH=$PATH:“$GOROOT/bin”`
+export PATH=$PATH:"$GOROOT/bin"`
+
+	if runtime.GOOS == "windows" {
+		tmpl = `export GOROOT="%s"
+export PATH=$PATH:"$GOROOT\bin"`
+	}
 	return fmt.Sprintf(tmpl, filepath.Join(version.Path, "go")), nil
 }

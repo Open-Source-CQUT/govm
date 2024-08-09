@@ -186,7 +186,8 @@ Available Commands:
   version     Show govm version
 
 Flags:
-  -h, --help   help for govm
+  -h, --help      help for govm
+  -s, --silence   Do not show any tip, warn, error
 
 Use "govm [command] --help" for more information about a command.
 ```

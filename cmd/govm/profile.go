@@ -11,11 +11,14 @@ import (
 )
 
 const (
-	profileTemplate = `export GOROOT="%s"
+	UnixProfileTemplate = `export GOROOT="%s"
 export PATH=$PATH:"%s"`
+	PowerShellProfileTemplate = `$env:GOROOT = "%s"
+$env:PATH += ";%s"`
 
-	bash    = "bash"
-	gitbash = "gitbash"
+	bash       = "bash"
+	gitbash    = "gitbash"
+	powershell = "powershell"
 )
 
 var (
@@ -62,6 +65,8 @@ func RunProfile(shell string) (string, error) {
 		return GitBashProfile(version)
 	case bash:
 		return BashProfile(version)
+	case powershell:
+		return PowershellProfile(version)
 	default:
 		return BashProfile(version)
 	}
@@ -74,7 +79,12 @@ func GitBashProfile(version govm.Version) (string, error) {
 	}
 	GOROOT := path.Join(govm.ToUnixPath(version.Path), "go")
 	GOROOTBIN := `$GOROOT/bin`
-	return fmt.Sprintf(profileTemplate, GOROOT, GOROOTBIN), nil
+	return fmt.Sprintf(UnixProfileTemplate, GOROOT, GOROOTBIN), nil
+}
+
+// PowershellProfile return a profile script for powershell
+func PowershellProfile(version govm.Version) (string, error) {
+	return fmt.Sprintf(PowerShellProfileTemplate, filepath.Join(version.Path, "go"), filepath.Join(version.Path, "go", "bin")), nil
 }
 
 // BashProfile return a profile script for bash, it is compatible with most linux shells.
@@ -82,5 +92,5 @@ func BashProfile(version govm.Version) (string, error) {
 	if runtime.GOOS == "windows" {
 		govm.Warnf("bash style profile not support for windows, you should use --shell=gitbash")
 	}
-	return fmt.Sprintf(profileTemplate, filepath.Join(version.Path, "go"), "$GOROOT/bin"), nil
+	return fmt.Sprintf(UnixProfileTemplate, filepath.Join(version.Path, "go"), "$GOROOT/bin"), nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Open-Source-CQUT/gover"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -67,6 +68,10 @@ func Tipf(format string, a ...any) {
 	}
 }
 
+func Warnf(format string, a ...any) {
+	Tipf("warn: "+format, a...)
+}
+
 // UserHomeDir returns the home directory for the current user.
 func UserHomeDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
@@ -83,4 +88,16 @@ func UserHomeDir() (string, error) {
 	}
 
 	return homeDir, nil
+}
+
+// ToUnixPath converts Windows path to Unix-style path.
+func ToUnixPath(p string) string {
+	volumeName := filepath.VolumeName(p)
+	if volumeName == "" {
+		return p
+	}
+	subPath := strings.ReplaceAll(strings.TrimPrefix(p, volumeName), "\\", "/")
+	// volume must be lowercase
+	volume := path.Join("/", strings.ToLower(strings.TrimSuffix(volumeName, ":")))
+	return path.Join(volume, subPath)
 }

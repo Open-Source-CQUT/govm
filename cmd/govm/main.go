@@ -35,7 +35,7 @@ func init() {
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(currentCmd)
-	rootCmd.AddCommand(cleanCmd)
+	rootCmd.AddCommand(purgeCmd)
 	rootCmd.AddCommand(profileCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.PersistentFlags().BoolVarP(&silence, "silence", "s", false, "Do not show any tip, warn, error")

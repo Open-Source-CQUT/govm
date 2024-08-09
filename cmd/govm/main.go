@@ -3,21 +3,27 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Open-Source-CQUT/govm"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
-	"os"
 	"runtime"
 )
 
 var (
 	Version = "untag"
+
+	// do not show any tip, warn, error
+	silence bool
 )
 
 var rootCmd = &cobra.Command{
 	Use:           "govm",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Short:         "govm is a tool to manage local Go versions",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		govm.Silence = silence
+	},
+	Short: "govm is a tool to manage local Go versions",
 }
 
 func init() {
@@ -32,26 +38,27 @@ func init() {
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(profileCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.PersistentFlags().BoolVarP(&silence, "silence", "s", false, "Do not show any tip, warn, error")
 }
 
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
+			govm.ErrPrintln(err)
 		}
 	}()
 
 	// execute command
 	err := rootCmd.Execute()
-	if err != nil {
+	if !silence && err != nil {
 		var kindError errorx.KindError
 		if errors.As(err, &kindError) {
 			// redirect to stdout
 			if kindError.Kind != errorx.ErrorKind {
-				_, _ = fmt.Fprintln(os.Stdout, kindError.Err.Error())
+				govm.Println(kindError.Err.Error())
 				return
 			}
 		}
-		_, _ = fmt.Fprintln(os.Stderr, err.Error())
+		govm.ErrPrintln(err.Error())
 	}
 }

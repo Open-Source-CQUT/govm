@@ -34,10 +34,10 @@ var searchCmd = &cobra.Command{
 			return err
 		}
 		if showCount {
-			fmt.Println(len(result))
+			govm.Println(len(result))
 		} else {
 			for _, version := range result {
-				fmt.Printf("%-10s\t%8s\n", version.Version, humanize.Bytes(version.Size))
+				govm.Printf("%-10s\t%8s\n", version.Version, humanize.Bytes(version.Size))
 			}
 		}
 		return nil

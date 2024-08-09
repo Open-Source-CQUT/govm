@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Open-Source-CQUT/govm"
 	"github.com/spf13/cobra"
 )
@@ -20,13 +19,13 @@ var listCmd = &cobra.Command{
 			return err
 		}
 		if showCount {
-			fmt.Println(len(localList))
+			govm.Println(len(localList))
 		} else {
 			for _, version := range localList {
 				if version.Using {
-					fmt.Printf("%s (*)\n", version.Version)
+					govm.Printf("%s (*)\n", version.Version)
 				} else {
-					fmt.Printf("%s\n", version.Version)
+					govm.Printf("%s\n", version.Version)
 				}
 			}
 		}

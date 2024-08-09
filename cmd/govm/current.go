@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Open-Source-CQUT/govm"
 	"github.com/Open-Source-CQUT/govm/pkg/errorx"
 	"github.com/spf13/cobra"
@@ -15,7 +14,7 @@ var currentCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(current)
+		govm.Println(current)
 		return nil
 	},
 }

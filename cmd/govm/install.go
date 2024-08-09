@@ -179,9 +179,12 @@ func DownloadVersion(version govm.Version) (*os.File, error) {
 		return nil, err
 	}
 
-	// create progress bar
-	processBar := govm.DownloadProcessBar(response.ContentLength,
-		fmt.Sprintf("Downloading %s", filename), "\n")
+	processBar := io.Discard
+	if !silence {
+		// create progress bar
+		processBar = (io.Writer)(govm.DownloadProcessBar(response.ContentLength,
+			fmt.Sprintf("Downloading %s", filename), "\n"))
+	}
 
 	// sha256 hash writer
 	hash := sha256.New()

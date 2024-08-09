@@ -35,10 +35,6 @@ func CompareVersion(v1, v2 string) int {
 	return gover.Compare(v1, v2)
 }
 
-func IsValidVersion(v string) bool {
-	return gover.IsValid(v)
-}
-
 func CheckVersion(v string) (string, bool) {
 	if !strings.HasPrefix(v, "go") {
 		v = "go" + v
@@ -57,6 +53,18 @@ func OpenFile(filename string, flag int, perm os.FileMode) (*os.File, error) {
 	return os.OpenFile(filename, flag, perm)
 }
 
+func ErrPrintln(a ...any) {
+	fmt.Fprintln(os.Stderr, a...)
+}
+
+func Println(a ...any) {
+	fmt.Fprintln(os.Stdout, a...)
+}
+
+func Printf(format string, a ...any) {
+	fmt.Fprintf(os.Stdout, format, a...)
+}
+
 var Silence bool
 
 func Tipf(format string, a ...any) {
@@ -64,7 +72,7 @@ func Tipf(format string, a ...any) {
 		if !strings.HasSuffix(format, "\n") {
 			format = format + "\n"
 		}
-		fmt.Printf(format, a...)
+		Printf(format, a...)
 	}
 }
 

@@ -30,7 +30,7 @@ var profileCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(script)
+		govm.Println(script)
 		return nil
 	},
 }

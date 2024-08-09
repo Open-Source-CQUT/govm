@@ -30,7 +30,7 @@ var configCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(config)
+		govm.Println(config)
 		return nil
 	},
 }

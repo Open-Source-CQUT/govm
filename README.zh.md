@@ -46,13 +46,13 @@ govm versoin v1.0.0 linux/amd64
 $ sudo govm install --use
 ```
 
-在linux下设置环境变量
+将下列内容添加到`$HOME/.bashrc`中
 
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.bash_profile && source $HOME/.bash_profile 
+eval "$(govm profile -s --shell=bash)"
 ```
 
-测试go是否可用
+重新登陆shell后测试go环境是否可用
 
 ```bash
 $ go version
@@ -72,19 +72,21 @@ govm versoin v1.0.0 windows/amd64
 
 **gitbash**
 
+将下列内容添加到`%HOME/.bashrc`文件中
+
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
+eval "$(govm profile -s --shell=gitbash)"
 ```
 
 **powershell**
 
-设置环境变量，需新开powershell生效
+将下列文件添加到`$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`文件中，如果不存在该文件就手动创建
 
 ```powershell
-PS > setx PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
+govm profile -s --shell=powershell | Out-String | Invoke-Expression
 ```
 
-测试go是否可用
+重新登陆shell后测试go环境是否可用
 
 ```bash
 $ go version
@@ -114,13 +116,13 @@ govm versoin v1.0.0 darwin/amd64
 $ sudo govm install --use
 ```
 
-在macos下设置环境变量
+将下列内容添加到`$HOME/.zshrc`文件中
 
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.zsh && source $HOME/.zsh
+eval "$(govm profile -s --shell=bash)"
 ```
 
-测试go是否可用
+重新登陆shell后测试go环境是否可用
 
 ```bash
 $ go version

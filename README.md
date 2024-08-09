@@ -17,7 +17,7 @@ If you have a go environment and the version is greater than go1.16, you can use
 $ go install github.com/Open-Source-CQUT/govm/cmd/govm@latest
 ```
 
-Or you can download the latest version of the binary file for the corresponding platform in [Release](https://github.com/Open-Source-CQUT/govm/releases). Currently, only releases for windows, macos, and linux are provided.
+Or you can download the latest binary file for the corresponding platform in [Release](https://github.com/Open-Source-CQUT/govm/releases). Currently, only releases for windows, macos, and linux are provided.
 
 ### linux
 
@@ -27,7 +27,7 @@ Install the govm file to the `/var/lib/govm` directory, and then link it to `/us
 $ ln -s /var/lib/govm/govm /usr/local/bin/govm
 ```
 
-Check if govm is available
+Check whether govm is available
 
 ```bash
 $ govm version
@@ -40,13 +40,13 @@ Use the install command to download the latest version
 $ sudo govm install --use
 ```
 
-Set environment variables in linux
+Add the following content to `$HOME/.bashrc`
 
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.bash_profile && source $HOME/.bash_profile
+eval "$(govm profile -s --shell=bash)"
 ```
 
-Test if go is available
+After re-login to the shell, test whether the go environment is available
 
 ```bash
 $ go version
@@ -64,19 +64,21 @@ govm versoin v1.0.0 windows/amd64
 
 **gitbash**
 
+Add the following content to the `%HOME/.bashrc` file
+
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.bashrc && source $HOME/.bashrc
+eval "$(govm profile -s --shell=gitbash)"
 ```
 
 **powershell**
 
-Set environment variables, need to open a new powershell to take effect
+Add the following file to the `$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1` file. If the file does not exist, create it manually
 
 ```powershell
-PS > setx PATH "$env:PATH;$env:USERPROFILE\.govm\root\go\bin"
+govm profile -s --shell=powershell | Out-String | Invoke-Expression
 ```
 
-Test whether go is available
+Re-login to the shell and test whether the go environment is available
 
 ```bash
 $ go version
@@ -91,7 +93,7 @@ Install the govm binary file to the `/var/lib/govm` directory, and then link it 
 $ ln -s /var/lib/govm/govm /usr/local/bin/govm
 ```
 
-Check if govm is available
+Check whether govm is available
 
 ```bash
 $ govm version
@@ -104,13 +106,13 @@ Use the install command to download the latest version
 $ sudo govm install --use
 ```
 
-Set environment variables under macos
+Add the following content to the `$HOME/.zshrc` file
 
 ```bash
-$ echo 'eval "$(govm profile)"' >> $HOME/.zsh && source $HOME/.zsh
+eval "$(govm profile -s --shell=bash)"
 ```
 
-Test if go is available
+Re-login to the shell and test whether the go environment is available
 
 ```bash
 $ go version

@@ -27,6 +27,15 @@ func RunClean() error {
 	if err != nil {
 		return err
 	}
+	config, err := govm.ReadConfig()
+	if err != nil {
+		return err
+	}
+	config.Use = ""
+	err = govm.WriteConfig(config)
+	if err != nil {
+		return err
+	}
 	govm.Tipf("Purged versions %d", len(store.Versions))
 	return nil
 }

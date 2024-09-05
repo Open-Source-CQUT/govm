@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Version = "untag"
+	Version = "v1.2.1"
 
 	// do not show any tip, warn, error
 	silence bool

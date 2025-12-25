@@ -1,0 +1,240 @@
+name: Build and publish release
+
+# 提取可配置变量
+env:
+  GO_VERSION: "1.22.5"
+  BINARY_NAME: "govm"
+  MODULE_PATH: "github.com/Open-Source-CQUT/govm/cmd/govm"
+
+on:
+  push:
+    tags:
+      - 'v*'  # 标签推送时全平台构建
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create release for (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      # 平台选择复选框（支持多选）
+      platforms:
+        description: 'Select platforms to build (multi-select)'
+        required: true
+        type: choice
+        multiple: true
+        options:
+          - windows_386
+          - windows_amd64
+          - windows_arm
+          - windows_arm64
+          - linux_386
+          - linux_amd64
+          - linux_arm
+          - linux_arm64
+          - darwin_amd64
+          - darwin_arm64
+
+permissions:
+  contents: write
+
+jobs:
+  # 生成构建矩阵（动态决定要构建的平台）
+  generate_matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set_matrix.outputs.matrix }}
+      release_tag: ${{ steps.get_tag.outputs.tag }}
+    steps:
+      - name: Get release tag
+        id: get_tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          # 确保标签以 v 开头
+          if [[ ! $TAG =~ ^v ]]; then
+            TAG="v$TAG"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Set build matrix
+        id: set_matrix
+        run: |
+          set -e
+          # 标签推送时：全平台（排除darwin不支持的架构）
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            MATRIX='{
+              "include": [
+                {"os":"windows","arch":"386"},
+                {"os":"windows","arch":"amd64"},
+                {"os":"windows","arch":"arm"},
+                {"os":"windows","arch":"arm64"},
+                {"os":"linux","arch":"386"},
+                {"os":"linux","arch":"amd64"},
+                {"os":"linux","arch":"arm"},
+                {"os":"linux","arch":"arm64"},
+                {"os":"darwin","arch":"amd64"},
+                {"os":"darwin","arch":"arm64"}
+              ]
+            }'
+          else
+            # 手动触发时：只构建选中的平台
+            SELECTED_PLATFORMS='${{ toJSON(github.event.inputs.platforms) }}'
+            # 转换选中的平台（如 windows_amd64 → {os: windows, arch: amd64}）
+            MATRIX=$(echo $SELECTED_PLATFORMS | jq '[
+              .[] | split("_") | {
+                "os": .[0],
+                "arch": .[1]
+              }
+            ] | { "include": . }')
+          fi
+          
+          # 输出matrix（转义换行符）
+          echo "matrix=$(echo $MATRIX | jq -c .)" >> $GITHUB_OUTPUT
+          # 打印matrix用于调试
+          echo "Build matrix: $MATRIX"
+
+  create_release:
+    name: Create release
+    needs: generate_matrix
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ needs.generate_matrix.outputs.release_tag }}
+          release_name: ${{ needs.generate_matrix.outputs.release_tag }}
+          body: |
+            ## govm ${{ needs.generate_matrix.outputs.release_tag }}
+            Automated build for govm (Go version manager)
+            
+            ### What's new
+            - Automated release build for ${{ needs.generate_matrix.outputs.release_tag }}
+            - Built with Go ${{ env.GO_VERSION }}
+            
+            ### Installation
+            See [installation guide](https://github.com/Open-Source-CQUT/govm#installation) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+  build_and_upload:
+    name: Build ${{ matrix.os }}/${{ matrix.arch }}
+    needs: [generate_matrix, create_release]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate_matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整git历史以获取tag信息
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true  # 启用Go模块缓存
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip make
+
+      - name: Build with Makefile
+        id: build
+        run: |
+          set -e
+          TAG="${{ needs.generate_matrix.outputs.release_tag }}"
+          VERSION="${TAG#v}"
+          
+          # 使用make构建指定平台
+          make build \
+            mode=release \
+            os=${{ matrix.os }} \
+            arch=${{ matrix.arch }}
+          
+          # 确定二进制文件路径
+          BIN_DIR="./bin/release/${{ env.BINARY_NAME }}-${{ matrix.os }}-${{ matrix.arch }}"
+          if [[ "${{ matrix.os }}" == "windows" ]]; then
+            BIN_PATH="${BIN_DIR}/${{ env.BINARY_NAME }}.exe"
+            PACKAGE_NAME="${{ env.BINARY_NAME }}_${VERSION}_${{ matrix.os }}_${{ matrix.arch }}.zip"
+            # 打包为zip
+            (cd $BIN_DIR && zip -j "$PACKAGE_NAME" "${{ env.BINARY_NAME }}.exe")
+            PACKAGE_PATH="${BIN_DIR}/${PACKAGE_NAME}"
+          else
+            BIN_PATH="${BIN_DIR}/${{ env.BINARY_NAME }}"
+            PACKAGE_NAME="${{ env.BINARY_NAME }}_${VERSION}_${{ matrix.os }}_${{ matrix.arch }}.tar.gz"
+            # 打包为tar.gz
+            tar -C $BIN_DIR -czf "${BIN_DIR}/${PACKAGE_NAME}" "${{ env.BINARY_NAME }}"
+            PACKAGE_PATH="${BIN_DIR}/${PACKAGE_NAME}"
+          fi
+          
+          # 输出必要信息
+          echo "PACKAGE_PATH=$PACKAGE_PATH" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          
+          # 验证文件存在
+          if [[ ! -f "$PACKAGE_PATH" ]]; then
+            echo "Error: Package $PACKAGE_PATH not found!"
+            exit 1
+          fi
+          
+          # 输出文件信息
+          ls -lh $PACKAGE_PATH
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.build.outputs.PACKAGE_PATH }}
+          asset_name: ${{ steps.build.outputs.PACKAGE_NAME }}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+  verify_release:
+    name: Verify release assets
+    needs: [generate_matrix, create_release, build_and_upload]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check release assets
+        run: |
+          set -e
+          TAG="${{ needs.generate_matrix.outputs.release_tag }}"
+          REPO="Open-Source-CQUT/govm"
+          
+          # 列出发布资产
+          echo "Verifying release assets for $TAG..."
+          gh release view $TAG --repo $REPO --json assets --jq '.assets[].name'
+          
+          # 获取构建的平台列表
+          MATRIX='${{ needs.generate_matrix.outputs.matrix }}'
+          # 提取所有构建的平台并检查资产
+          echo $MATRIX | jq -r '.include[] | "\(.os)_\(.arch)"' | while read PLATFORM; do
+            OS=$(echo $PLATFORM | cut -d'_' -f1)
+            ARCH=$(echo $PLATFORM | cut -d'_' -f2)
+            VERSION="${TAG#v}"
+            
+            if [[ "$OS" == "windows" ]]; then
+              ASSET="govm_${VERSION}_${OS}_${ARCH}.zip"
+            else
+              ASSET="govm_${VERSION}_${OS}_${ARCH}.tar.gz"
+            fi
+            
+            if ! gh release view $TAG --repo $REPO --json assets --jq ".assets[] | select(.name == \"$ASSET\")" > /dev/null; then
+              echo "Error: Missing asset $ASSET"
+              exit 1
+            fi
+            echo "✓ Found asset: $ASSET"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}

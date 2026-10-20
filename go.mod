@@ -1,6 +1,6 @@
 module github.com/Open-Source-CQUT/govm
 
-go 1.22.5
+go 1.24
 
 require (
 	github.com/Open-Source-CQUT/gover v1.0.0
@@ -25,7 +25,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/nwaples/rardecode/v2 v2.0.0-beta.2 // indirect
